@@ -1,0 +1,223 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% LaTeX Example: Project Report
+%
+% Source: http://www.howtotex.com
+%
+% Feel free to distribute this example, but please keep the referral
+% to howtotex.com
+% Date: March 2011
+%
+% Edit the title below to update the display in My Documents
+%\title{Project Report}
+%
+%%% Preamble
+\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+\usepackage[T1]{fontenc}
+\usepackage{fourier}
+
+\usepackage[english]{babel}  % English language/hyphenation
+\usepackage[protrusion=true,expansion=true]{microtype}
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage[pdftex]{graphicx}
+\usepackage{url}
+
+%%% Custom sectioning
+\usepackage{sectsty}
+%\allsectionsfont{\centering \normalfont\scshape}   %original
+\allsectionsfont{\normalfont\scshape}
+
+%%% By Davide
+\usepackage{comment}
+\usepackage{float}
+\floatstyle{boxed}
+\newfloat{fragment}{htb}{fragment}
+\floatname{fragment}{Fragment}
+
+\usepackage{booktabs}
+
+\usepackage{framed}
+\usepackage{fancyvrb}
+\RecustomVerbatimEnvironment{Verbatim}{Verbatim}{fontsize=\footnotesize,baselinestretch=.9}
+\usepackage{listings}
+
+\usepackage[export]{adjustbox}
+
+\usepackage{courier}
+%\newcommand{\mono}[1]{\texttt{\textbf{#1}}}
+\newcommand{\mono}[1]{\texttt{#1}}
+
+%\usepackage{mathtools}
+\usepackage[square,numbers]{natbib} % customize citation style
+\usepackage[hidelinks]{hyperref}  % \href and \url tags, clickable crossref
+\usepackage{subcaption}
+
+\usepackage[section,nottoc]{tocbibind}
+%\renewcommand\tocbibname{\refname}  % tocbibind will use "References" rather than "Bibliography"
+\bibliographystyle{plainnat}  % allows \citeauthor but still uses numbering with [numbers]
+\usepackage{refcheck}  % for \nocite{*} (bib debugging)
+% Glossary
+\usepackage[xindy,toc]{glossaries}  % nomain allows for 
+%\loadglsentries[main]{SDN-glossary}
+\include{SDN-glossary}
+\makeglossaries
+%\usepackage[xindy]{imakeidx}
+%\makeindex
+
+%%% Custom headers/footers (fancyhdr package)
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhead{}                                            % No page header
+\fancyfoot[L]{Davide Kirchner}
+\fancyfoot[C]{}
+\fancyfoot[R]{\thepage}                                 % Pagenumbering
+\renewcommand{\headrulewidth}{0pt}          % Remove header underlines
+\renewcommand{\footrulewidth}{0pt}              % Remove footer underlines
+\setlength{\headheight}{13.6pt}
+
+
+%%% Equation and float numbering
+%\numberwithin{equation}{section}        % Equationnumbering: section.eq#
+%\numberwithin{figure}{section}          % Figurenumbering: section.fig#
+%\numberwithin{table}{section}               % Tablenumbering: section.tab#
+%\numberwithin{fragment}{section}
+
+
+%%% Maketitle metadata
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}}     % Horizontal rule
+
+\title{
+        \vspace{-1in}
+        \usefont{OT1}{bch}{b}{n}
+        \normalfont \normalsize \textsc{Graduate Program in Computer Science and Engineering} \\
+	\normalfont \normalsize \textsc{DISI, University of Trento | TeCIP, Scuola Sant'Anna, Pisa} \\ [25pt] %[6pt]
+        %\normalfont \normalsize \textsc{Introduction to Neural Networks: course project} \\ [25pt]
+        \horrule{0.5pt} \\[0.4cm]
+        \huge Thesis preliminary work: Informal State of the Art \\
+        \horrule{2pt} \\[0.5cm]
+}
+\author{
+        \normalfont                                 \normalsize
+        Author: Davide Kirchner \\[-3pt]  \normalsize
+        %\includegraphics[height=1.8ex]{img/addr.png}\vspace{-.4ex}\\[-3pt]     \normalsize
+        \mono{davide.kirchner@yahoo.it}\\[-3pt]     \normalsize
+        Student ID 167679\\[-3pt]     \normalsize
+        %Supervisor: prof. Giorgio Buttazzo \\[-3pt]      \normalsize
+        %[DRAFT]
+        \today
+}
+\date{}
+
+%%% Begin document
+\begin{document}
+\maketitle
+
+\setcounter{tocdepth}{3}
+%\tableofcontents
+%\clearpage
+
+
+\section{Intro}
+
+dsadsada dsadasdsa \gls{SDN}
+
+dsadaaaa
+
+% Shows _all_ bib entries and their keys, highlights unused ones
+\nocite{*}  \vspace{20pt} \hspace{-14pt} \emph{\small(using bibliography debugging utility)} \vspace{-20pt}
+
+\bibliography{davide_kirchner_thesis}
+
+%\printindex  % don't know what this is for, was suggested for glossary...
+\printglossaries
+
+% example figure
+\begin{comment}
+\begin{figure}
+  \centering
+  \includegraphics[width=.9\textwidth,trim=0cm 7cm 0cm 3.5cm,clip]{img/tasks_resources_diagram.pdf}
+  \caption{\label{fig:architecture} A representation of the interactions among the spawned threads. Note that, other than the ones here represented, the periodic tasks themselves may have extra dependencies and interactions, according to the provided description file.}
+\end{figure}
+\end{comment}
+
+% example with minipage
+\begin{comment}
+\begin{figure}
+  \begin{minipage}[b]{.5\linewidth}
+    \includegraphics[width=1.0\linewidth,trim=2cm 1cm 1.5cm 1cm,clip]{images/delivery_9-Y.png}
+    \subcaption{\label{fig:delivery:a}Node 9 sending to the yellow group.}
+  \end{minipage}%
+  \begin{minipage}[b]{.5\linewidth}
+    \includegraphics[width=1.0\linewidth,trim=2cm 1cm 1.5cm 1cm,clip]{images/delivery_3-R.png}
+    \subcaption{\label{fig:delivery:b}Node 3 sending to the red group.}
+  \end{minipage}
+  \caption{\label{fig:delivery}Color-scale representation of the delivery ratio at the target nodes.}
+\end{figure}
+\end{comment}
+
+\begin{comment}
+\begin{thebibliography}{99}
+% \addcontentsline{toc}{section}{References}  % made redundant by tocbibind
+
+\bibitem{man-sched}
+  VV.AA.
+  \textit{SCHED(7)}.
+  Linux Programmer's Manual.
+  Linux man-pages.
+  2014.
+  %\\
+  %\texttt{https://web.archive.org/web/20141101222734/\\
+  %  http://man7.org/linux/man-pages/man7/sched.7.html}
+
+\end{thebibliography}
+\end{comment}
+
+
+% \section{Heading on level 1 (section)}
+% \begin{align}
+%     \begin{split}
+%     (x+y)^3     &= (x+y)^2(x+y)\\
+%                     &=(x^2+2xy+y^2)(x+y)\\
+%                     &=(x^3+2x^2y+xy^2) + (x^2y+2xy^2+y^3)\\
+%                     &=x^3+3x^2y+3xy^2+y^3
+%     \end{split}
+% \end{align}
+
+% \subsection{Heading on level 2 (subsection)}
+% \begin{align}
+%     A =
+%     \begin{bmatrix}
+%     A_{11} & A_{21} \\
+%     A_{21} & A_{22}
+%     \end{bmatrix}
+% \end{align}
+
+% \subsubsection{Heading on level 3 (subsubsection)}
+
+% \paragraph{Heading on level 4 (paragraph)}
+
+
+% \section{Lists}
+
+% \subsection{Example for list (3*itemize)}
+% \begin{itemize}
+%     \item First item in a list
+%         \begin{itemize}
+%         \item First item in a list
+%             \begin{itemize}
+%             \item First item in a list
+%             \item Second item in a list
+%             \end{itemize}
+%         \item Second item in a list
+%         \end{itemize}
+%     \item Second item in a list
+% \end{itemize}
+
+% \subsection{Example for list (enumerate)}
+% \begin{enumerate}
+%     \item First item in a list
+%     \item Second item in a list
+%     \item Third item in a list
+% \end{enumerate}
+
+%%% End document
+\end{document}
