@@ -52,6 +52,13 @@ kirchner_preliminary_stateoftheart.pdf: tex_outdir/kirchner_preliminary_stateoft
 	ln -s -f tex_outdir/kirchner_preliminary_stateoftheart.pdf kirchner_preliminary_stateoftheart.pdf
 
 
+# vim spellfile
+.vimspell.words.add.spl: .vimspell.words.add
+	vim -i NONE -u NORC -U NONE -V1 -nNesc \
+		'execute ":mkspell! " . fnameescape(".vimspell.words.add") | echo "" | qall!'
+.PHONY: spell
+spell: .vimspell.words.add.spl
+
 .PHONY: clean
 clean:
 	latexmk -CA

@@ -2,4 +2,7 @@
 /kirchner_preliminary_stateoftheart.pdf
 /tex_outdir
 
+# vim compiled spell file
+*.spl
+# vim swap file
 *.swp
