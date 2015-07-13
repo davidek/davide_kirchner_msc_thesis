@@ -1,0 +1,35 @@
+# List of project-specific words for spell, in VIM's words syntax
+# /= means that the word must appear with the same case
+userspace
+DMA/=
+netmap
+DPDK/=
+SDN/=
+NIC/=
+PacketShader
+syscalls
+middlebox
+FastClick
+NUMA
+DoubleClick
+GPU
+GPUs
+NPU
+NPUs
+NFV
+VM
+VMs
+virtualization
+ClickOS
+hypervisor
+Xen
+MiniOS
+NetVM
+QEMU
+KVM
+dom0
+domU
+ICN
+Mpps
+IPv4
+IPv6

@@ -1,16 +1,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% LaTeX Example: Project Report
-%
-% Source: http://www.howtotex.com
-%
+% LaTeX Example: Project Report Source: http://www.howtotex.com
 % Feel free to distribute this example, but please keep the referral
 % to howtotex.com
-% Date: March 2011
 %
-% Edit the title below to update the display in My Documents
-%\title{Project Report}
-%
-%%% Preamble
 \documentclass[paper=a4, fontsize=11pt]{scrartcl}
 \usepackage[T1]{fontenc}
 \usepackage{fourier}
@@ -27,6 +19,7 @@
 \allsectionsfont{\normalfont\scshape}
 
 %%% By Davide
+\usepackage[hidelinks]{hyperref}  % \href and \url tags, clickable crossref
 \usepackage{comment}
 \usepackage{float}
 \floatstyle{boxed}
@@ -47,14 +40,18 @@
 \newcommand{\mono}[1]{\texttt{#1}}
 
 %\usepackage{mathtools}
-\usepackage[square,numbers]{natbib} % customize citation style
-\usepackage[hidelinks]{hyperref}  % \href and \url tags, clickable crossref
 \usepackage{subcaption}
 
+\usepackage{xcolor}  % would anyway be imported by todonotes
+\colorlet{lightorange}{orange!40}  % 40% orange, 60% white
+\usepackage[colorinlistoftodos,linecolor=orange,backgroundcolor=lightorange]{todonotes}
+%% Usage: \todo{margin note} or \todo[inline]{note in a full-width box}
+
+\usepackage[square,numbers]{natbib} % customize citation style
+\bibliographystyle{alpha}  % allows \citeauthor but still uses numbering with [numbers]
 \usepackage[section,nottoc]{tocbibind}
 %\renewcommand\tocbibname{\refname}  % tocbibind will use "References" rather than "Bibliography"
-\bibliographystyle{plainnat}  % allows \citeauthor but still uses numbering with [numbers]
-\usepackage{refcheck}  % for \nocite{*} (bib debugging)
+%\usepackage{refcheck}  % for \nocite{*} (bib debugging)
 % Glossary
 \usepackage[xindy,toc]{glossaries}  % nomain allows for 
 %\loadglsentries[main]{SDN-glossary}
@@ -92,7 +89,7 @@
 	\normalfont \normalsize \textsc{DISI, University of Trento | TeCIP, Scuola Sant'Anna, Pisa} \\ [25pt] %[6pt]
         %\normalfont \normalsize \textsc{Introduction to Neural Networks: course project} \\ [25pt]
         \horrule{0.5pt} \\[0.4cm]
-        \huge Thesis preliminary work: Informal State of the Art \\
+        \huge Thesis preliminary work: State of the Art Survay\\
         \horrule{2pt} \\[0.5cm]
 }
 \author{
@@ -115,15 +112,55 @@
 %\tableofcontents
 %\clearpage
 
+[I'll leave for the introduction some more context about SDN in general and Click\cite{click}]\\
 
-\section{Intro}
+The recent availability of high-performance \gls{COTS} hardware, ranging from multi-core CPUs to affordable 10 Gbps network cards, has boosted the possibilities offered by \gls{SDN}, allowing to run software-based network functions at, or close to, line speed.
 
-dsadsada dsadasdsa \gls{SDN}
+\paragraph{High-speed packet I/O} Together with new hardware, one key improvement that has enabled this performance boost was the introduction of high-speed packet I/O libraries, all of which provide a way to bypass the OS basic network stack (which is flow-oriented and might involve a packet being copied a number of times in its way from the NIC card to the userspace memory) in order to optimize for packet-oriented processing.
 
-dsadaaaa
+Among these libraries are the open-source netmap\cite{netmap} and DPDK\cite{dpdk}
+\todo{others are psio (PacketShader I/O Engine) and PF RING ZC but I did't look into them deeply, they seem less widely used}
+: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of any packet, relying solely the DMA write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
+
+Other features shared by both libraries are:
+the possibility to receive in batches (thus amortising the cost of the required syscalls and interrupts management among a batch of packets);
+the option to leverage on modern NIC cards' hardware multi-queue system, allowing the incoming traffic from one card to be split among multiple threads that may run on different cores. The two libraries achieve these goals with different architectures: while netmap runs as a kernel module and relies on mmap to share the buffers with the userspace application, DPDK's core runs in userspace.
+Performance-wise, the two libraries are comparable and both were shown to outperform the basic Linux and BSD network stacks; DPDK has been documented to behave slightly better in some applications\cite{fastclick}.
+
+
+\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks have been developed in order to ease the implementation of custom router/middlebox functionalities, bundled with commonly used components and sample applications. Many of them are directly or indirectly based on Click\cite{click}, which allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{components}, that process each packet in cascade.
+Barbette et al.\cite{fastclick} approached this by forking Click and addressing its bottlenecks one by one in the light of the newly available hardware and fast I/O libraries, resulting in the open-source FastClick. Another approach, pursued by Kim et al.\cite{nba}, fully implemented a (closed-source, to the best of my understanding) Click-like middlebox programming framework re-using (and extending) only the original Click configuration parser.\todo{These 2 seem the most recent, taking some ideas from DoubleClick and Snap}
+
+FastClick and NBA share a number of features:
+fully exploit zero-copy I/O and hardware multi-queuing;
+take advantage of I/O bathing and bring the idea further to computation batching;
+use a run-to-completion (also called full-push, in contrast with pipelined or push-pull) execution model, meaning that a single thread will handle all the components that act on the same packet batch;
+handle computation and I/O in a NUMA-aware fashion.
+Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors such as GPUs (used ) allowing for an equivalent CPU-only implementation of each \emph{offloadable} component: it is then capable of dynamically balance (hence the name) the computation among the CPU and the co-processors, which are only used under heavy workload as their usage negatively impacts latency. In their tests, NBA authors ran a sample IPv4 routing application on a machine with 16-cores, 4x 2x 10 Gbps NIC cards and 5 GPUs yielding about 60 Gbps (with 64B packets). On their side, the FastClick authors obtained a 30 Gbps throughput with a router application running on 4 cores and 2x 2x 10 Gbps NIC cards with the same minimal packet size. \todo{?? how does one convert to pkts per sec? my maths do not match with the literature... they get 14 Mpps for 10 Gbps, I get 19 Mpps}
+
+
+\paragraph{Virtualization} Another aspect that has been explored in literature is the possibility to run this kind of software functions on virtual machines, which goes under the name of \acrfull{NFV}.
+Still allowing the flexibility introduced with \gls{SDN}, this is attractive to the cloud business in that it allows independent network functionalities to be deployed on the same hardware in isolation (both from a security point of view, and in memory/CPU shares) and offers the possibility to quickly and dynamically scale a service by allocating more equivalent VMs on different hardware. Of course, this comes at the price of adding one extra software layer between the NIC card and the application.
+
+One such work, developed by Martins et al.\cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a Linux installation running on the privileged dom0 domain: in order to boost performance, they relied on netmap\cite{netmap} and a custom virtual network driver dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC card, they obtained a throughput of little over 4 Mpps\todo{conversion to Gbps} .
+
+
+Different architecture choices have lead Hwang et al. to the development of NetVM\cite{netvm}: the authors relied on QEMU\footnote{http://www.qemu.org} and KVM acceleration to run Linux on the host machine and the guests, using a DPDK-based userspace driver on the host; with some custom zero-copy host-guest communication structure, NetVM offers to the guest application a userspace library. Although they ported the userspace Click version to work in their setup, the authors recommend cascading services offered by multiple VMs exploiting the optimized VM-to-VM communication, in a way treating VMs similarly to Click components. NetVM also offers basic trust-group management capabilities. Testing their system on a machine with 12 cores and a 10 Gbps NIC card, the authors claim full speed with a simple L3 forwarder and about 6 Gbps with a Click router.
+\todo[inline]{I initially thought it was nice to report here the performance achieved by the different software in the author's test to give an idea of the orders of magnitude involved. I now begin to wonder whether this is just confusing, as the numbers are totally uncomparable with each other.}
+
+\paragraph{Information-centric networking} One interesting application where \gls{SDN} is attractive is the development (and deployment) of middlebox software for \gls{ICN}\todo{some more context, perhaps some historical work that gave birth to the field?}, where routing and caching of data is often based on variable-length hierarchical resource identifiers: in this context, one critical bottleneck resides in the access to the routing table, that can grow much bigger than classical IP ones.
+A key aspect to enable high-speed name-based routing is thus to optimize the data structures involved in the routing process: the \gls{FIB}, holding the name-interface association, which is queried for longest-prefix match; the \gls{PIT}, caching information of not-yet-evaded \emph{interest} packets received; and an index for locally-available cached content.
+
+So et al.\cite{ndn_fast_dosresistant} proposed an algorithm to perform the longest-prefix match in the \gls{FIB} using a hash-table guaranteeing bounded number of reads in the worst-case, regardless of the number of components in the requested resource identifier. Their work also focuses on the optimization of the hash tables and the hashing function and on the possibility to partition the \gls{FIB} table among multiple processing cores.
+
+In another work, Perino et al.\cite{caesar} have proposed Caesar, a 2-stage longest-prefix lookup algorithm based on a bloom filter that returns (with the possibility of false positives) the length of the prefix and a successive single lookup in the hash table, thus reducing the required memory access operations to two in most cases. Caesar also supports distributing the \gls{FIB} among the NPUs \todo{Their architecture looks more like a programmable router than a server with a fast line card, but I'm not sure I understood if there is a qualitative difference} and GPU computation offloading.
+% It is worth noting that, unlike \gls{SDN} systems described above, the proposed architecture relies on data-plane computation to be executed on the line cards equipped with NPUs, each with its per-card 
+
+% [Non ho ben capito se e` vero]: It is worth noting that the mentioned works target programmable routers rather than general purpose servers with high-speed NIC cards, leveraging 
+
 
 % Shows _all_ bib entries and their keys, highlights unused ones
-\nocite{*}  \vspace{20pt} \hspace{-14pt} \emph{\small(using bibliography debugging utility)} \vspace{-20pt}
+% \nocite{*}  \vspace{20pt} \hspace{-14pt} \emph{\small(using bibliography debugging utility)} \vspace{-20pt}
 
 \bibliography{davide_kirchner_thesis}
 
