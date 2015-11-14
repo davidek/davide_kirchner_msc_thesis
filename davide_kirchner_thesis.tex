@@ -1,0 +1,454 @@
+%\documentclass[12pt,a4paper,oneside]{book}
+\documentclass[12pt,a4paper,twoside]{book}
+\usepackage[english]{babel}
+
+\usepackage[hidelinks,breaklinks]{hyperref}  % added
+
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{amssymb}
+%\usepackage{natbib}
+\usepackage[numbers]{natbib}
+\usepackage{rotating}
+\usepackage{multirow}
+\usepackage{enumerate}
+\usepackage{color}
+\usepackage{comment}
+
+% added
+\usepackage{subcaption}
+\usepackage[super]{nth}
+%\usepackage[xindy,toc]{glossaries}
+\usepackage[nottoc,chapter]{tocbibind} % ToC item for Bibliography at chapter level [no ToC item for ToC]
+\usepackage[boxed,algochapter,vlined]{algorithm2e}
+\usepackage{indentfirst}  % Indent first line of first paragraph of chapters/sections/...
+\usepackage{tikz}
+\renewcommand{\bottomfraction}{0.6}
+\renewcommand{\topfraction}{0.8}
+
+% TODO notes
+\usepackage{xcolor}  % would anyway be imported by todonotes
+\colorlet{lightorange}{orange!40}  % 40% orange, 60% white
+\usepackage[colorinlistoftodos,linecolor=orange,backgroundcolor=lightorange]{todonotes}
+%% Usage: \todo{margin note} or \todo[inline]{note in a full-width box}
+\usepackage{csvsimple}  % read csv to table
+\usepackage{booktabs}   % table styling
+
+% Glossary
+\usepackage[xindy,toc]{glossaries}  % nomain allows for 
+%\loadglsentries[main]{SDN-glossary}
+\include{SDN-glossary}
+\makeglossaries
+
+% for allowing forced newlines inside table header cells
+% from http://tex.stackexchange.com/a/19678/25479
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+\bibliographystyle{alpha}
+%\bibliographystyle{plain}
+%\bibliographystyle{plainnat}  % allows \citeauthor but still uses numbering with [numbers]
+%\bibliographystyle{unsrtnat}  % allows \citeauthor but still uses numbering with [numbers]
+%\usepackage[all]{nowidow}  % Tries to prevent widow lines
+
+
+% vvv  Acknowledgemts in cima  vvv
+\makeatletter
+\newcommand\ackname{Acknowledgements}
+\newenvironment{acknowledgements}{
+  \newpage
+  \thispagestyle{empty}
+  \null\vfil
+  \@beginparpenalty\@lowpenalty
+  \begin{center}
+    % \bfseries \ackname  % tolto da me
+    \@endparpenalty\@M
+  \end{center}}
+{\par\vfil\null\endtitlepage}
+\makeatother
+% ^^^  Acknowledgemts in cima  ^^^
+
+%glossary
+%\makeglossaries
+%\newacronym{GIS}{GIS}{Geographical Information System}
+%\newacronym{fromto}{SD pair}{Source-Destination node pair}
+
+
+% This is needed in order NOT to print blank pages, even if a chapter begins at odd page
+% even if in twoside. When document will be done, might be re-inserted
+%\let\cleardoublepage\clearpage
+
+\begin{document}
+
+\begin{titlepage}
+  \begin{center}
+    \begin{Large}University of Trento\\\end{Large}
+    Department of Information Engineering and Computer Science
+    \vspace{10pt}
+    %\begin{figure}[htb]
+    \begin{figure}[h!]
+      \begin{center}
+        % \includegraphics[width=3cm]{img/sigillo_unitn.eps}
+        % \includegraphics[width=3cm]{img/unitn_logo.eps}
+        \includegraphics[width=3cm]{img/unitn_logo.pdf}
+      \end{center}
+    \end{figure}
+
+    Master degree course in Computer Science
+
+    \vspace{10pt}
+    \line(1,0){338}
+    \vspace{10pt}
+
+    Final Thesis\\
+  \end{center}
+
+  \vspace{3cm}
+
+  \begin{center}
+    \begin{Large}Some title containing SDN\\\end{Large}
+    \vspace{3cm}
+  \end{center}
+
+  \noindent
+  \begin{minipage}[t]{.7\linewidth}
+    Supervisors:\\ 
+    \textbf{Prof. Renato Lo Cigno}\\
+    \textbf{Prof. (co-supervisor)}
+  \end{minipage}%
+  \begin{minipage}[t]{.25\linewidth}
+    %~\\
+    Graduant:\\
+    \textbf{Davide Kirchner}
+  \end{minipage}
+
+  \vspace{2cm}
+  \begin{center}
+    Academic year 2014-2015
+  \end{center}
+\end{titlepage}
+
+\tableofcontents
+
+%\printglossaries
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{comment}
+\begin{acknowledgements}
+
+This work was developed in the context of a stage and junior programmer job position at \emph{Predictive Models for Biomedicine and Environment} (MPBA) unit at \emph{Fondazione Bruno Kessler} research center.
+
+I would like to express my gratitude to Cesare Furlanello, head of unit at MPBA, and to Alberto Montresor, associate professor at the University of Trento, for supervising my  work.
+
+%This work was possible thanks to the effort of Cesare Furlanello and all the colleagues at \emph{Predictive Models for Biomedicine and Environment} (MPBA) unit at \emph{Fondazione Bruno Kessler} who contributed to the results I have achieved.
+%I would also like to thank professor Alberto Montresor for supervising me in this work.
+\end{acknowledgements}
+\end{comment}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter*{Summary}
+\addcontentsline{toc}{chapter}{Summary}
+
+%\vspace{-.7cm}  % prevent abstract from using 3 pages. Actually ugly
+
+%% FOOTNOTE EXAMPLE
+% The results of this work can be used in the epidemiological analysis phase of \emph{SicurSkiWeb}%
+% \footnote{\emph{SicurSkiWeb} is developed by \emph{MPBA} (\emph{Predictive Models for Biomedicine and Environment}) unit at \emph{Fondazione Bruno Kessler} and the Questura of Trento (Ski Patrol Unit)},
+% a project which aims at providing a spatial decision system for monitoring and improving safety on ski slopes. December \nth{6}.
+
+%\vspace{-.2cm}  % prevent abstract from using 3 pages. Actually ugly
+
+%  SUBFIGURE EXAMPLE
+%\begin{figure}[htb]
+%  \centering
+%  \begin{subfigure}{.5\textwidth}
+%    \centering
+%    \frame{
+%      \begin{tikzpicture}
+%        \path [clip] (0,0) rectangle (.95\linewidth,.90\linewidth);
+%        \node (graph) at (.5\linewidth,.5\linewidth) [yshift=-.5cm]
+%          {\includegraphics[width=.95\linewidth]{img/maps/igraph_graph.pdf}};
+%        % \node (pict) at (0,.90\linewidth) [anchor=north west,xshift=.1cm,yshift=-.1cm]
+%        %   {\frame{\includegraphics[width=.7\linewidth]{img/skiarea_mdc_pinzolo_drowing.jpg}}};
+%      \end{tikzpicture}
+%    }
+%    %\caption*{Slopes topology graph (Pinzolo).\\~}
+%  \end{subfigure}%
+%  \begin{subfigure}{.5\textwidth}
+%    \centering
+%    \frame{
+%      \begin{tikzpicture}
+%        \path [use as bounding box] (0,0) rectangle (.95\linewidth,.90\linewidth);
+%        \node at (.5\linewidth,.5\linewidth)
+%          {\includegraphics[width=\linewidth]{img/traffic/brenta_groups_bw.pdf}};
+%      \end{tikzpicture}
+%    }
+%    %\caption*{Travel time distributions on Brenta slope for different groups types.}
+%  \end{subfigure}
+%  \caption[]{Left panel: slopes topology graph for Pinzolo skiing area. Right panel: travel time distributions on Brenta slope for different groups types.}
+%\end{figure}
+
+
+%\vspace{-.6cm}  % prevent abstract from using 3 pages. Actually ugly
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Introduction}
+
+\section{State of the art}
+
+The recent availability of high-performance
+commodity off-the-shelf
+%\gls{COTS}
+hardware, ranging from multi-core CPUs to affordable 10 Gbps network cards, has boosted the possibilities offered by \gls{SDN}, allowing to run software-based network functions at, or close to, line speed.
+
+\paragraph{High-speed packet I/O} Together with new hardware, one key improvement that has enabled this performance boost was the introduction of high-speed packet I/O libraries, all of which provide a way to bypass the OS basic network stack (which is flow-oriented and might involve a packet being copied a number of times in its way from the NIC card to the userspace memory) in order to optimize for packet-oriented processing.
+
+Among these libraries are the open-source netmap\cite{netmap} and DPDK\cite{dpdk}
+\todo{others are psio (PacketShader I/O Engine) and PF RING ZC but I did't look into them deeply, they seem relatively outdated}
+: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of any packet, relying solely the DMA write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
+
+Other features shared by both libraries are:
+the possibility to receive in batches (thus amortising the cost of the required syscalls and interrupts management among a batch of packets);
+the option to leverage on modern NIC cards' hardware multi-queue system, allowing the incoming traffic from one card to be split among multiple threads that may run on different cores. The two libraries achieve these goals with different architectures: while netmap runs as a kernel module and relies on mmap to share the buffers with the userspace application, DPDK's core runs in userspace.
+Performance-wise, the two libraries are comparable and both were shown to outperform the basic Linux and BSD network stacks; DPDK has been documented to behave slightly better in some applications\cite{fastclick}.
+
+
+\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks have been developed in order to ease the implementation of custom router/middlebox functionalities, bundled with commonly used components and sample applications. Many of them are directly or indirectly based on Click\cite{click}, which allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{components}, that process each packet in cascade.
+Barbette et al.\cite{fastclick} approached this by forking Click and addressing its bottlenecks one by one in the light of the newly available hardware and fast I/O libraries, resulting in the open-source FastClick. Another approach, pursued by Kim et al.\cite{nba}, fully implemented a (closed-source) Click-like middlebox programming framework re-using (and extending) only the original Click configuration parser.\todo{These 2 seem the most recent, taking some ideas from DoubleClick and Snap}
+
+FastClick and NBA share a number of features:
+fully exploit zero-copy I/O and hardware multi-queuing;
+take advantage of I/O bathing and bring the idea further to computation batching;
+use a run-to-completion (also called full-push, in contrast with pipelined or push-pull) execution model, meaning that a single thread will handle all the components that act on the same packet batch;
+handle computation and I/O in a NUMA-aware fashion.
+Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors such as GPUs (used ) allowing for an equivalent CPU-only implementation of each \emph{offloadable} component: it is then capable of dynamically balance (hence the name) the computation among the CPU and the co-processors, which are only used under heavy workload as their usage negatively impacts latency. In their tests, NBA authors ran a sample IPv4 routing application on a machine with 16-cores, 4x 2x 10 Gbps NIC cards and 5 GPUs yielding about 60 Gbps (with 64B packets). On their side, the FastClick authors obtained a 30 Gbps throughput with a router application running on 4 cores and 2x 2x 10 Gbps NIC cards with the same minimal packet size. \todo{convert to pkts per sec?}
+
+
+\paragraph{Virtualization} Another aspect that has been explored in literature is the possibility to run this kind of software functions on virtual machines, which goes under the name of \acrfull{NFV}.
+Still allowing the flexibility introduced with \gls{SDN}, this is attractive to the cloud business in that it allows independent network functionalities to be deployed on the same hardware in isolation (both from a security point of view, and in memory/CPU shares) and offers the possibility to quickly and dynamically scale a service by allocating more equivalent VMs on different hardware. Of course, this comes at the price of adding one extra software layer between the NIC card and the application.
+
+One such work, developed by Martins et al.\cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a Linux installation running on the privileged dom0 domain: in order to boost performance, they relied on netmap\cite{netmap} and a custom virtual network driver dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC card, they obtained a throughput of little over 4 Mpps\todo{Gbps?} .
+
+
+Different architecture choices have lead Hwang et al. to the development of NetVM\cite{netvm}: the authors relied on QEMU\footnote{http://www.qemu.org} and KVM acceleration to run Linux on the host machine and the guests, using a DPDK-based userspace driver on the host; with some custom zero-copy host-guest communication structure, NetVM offers to the guest application a userspace library. Although they ported the userspace Click version to work in their setup, the authors recommend cascading services offered by multiple VMs exploiting the optimized VM-to-VM communication, in a way treating VMs similarly to Click components. NetVM also offers basic trust-group management capabilities. Testing their system on a machine with 12 cores and a 10 Gbps NIC card, the authors claim full speed with a simple L3 forwarder and about 6 Gbps with a Click router.
+\todo[inline]{I initially thought it was nice to report here the performance achieved by the different software in the author's test to give an idea of the orders of magnitude involved. I now begin to wonder whether this is just confusing, as the numbers are totally uncomparable with each other.}
+
+\paragraph{Information-centric networking} One interesting application where \gls{SDN} is attractive is the development (and deployment) of middlebox software for \gls{ICN}\todo{some more context, perhaps some historical work that gave birth to the field?}, where routing and caching of data is often based on variable-length hierarchical resource identifiers: in this context, one critical bottleneck resides in the access to the routing table, that can grow much bigger than classical IP ones.
+A key aspect to enable high-speed name-based routing is thus to optimize the data structures involved in the routing process: the \gls{FIB}, holding the name-interface association, which is queried for longest-prefix match; the \gls{PIT}, caching information of not-yet-evaded \emph{interest} packets received; and an index for locally-available cached content.
+
+So et al.\cite{ndn_fast_dosresistant} proposed an algorithm to perform the longest-prefix match in the \gls{FIB} using a hash-table guaranteeing bounded number of reads in the worst-case, regardless of the number of components in the requested resource identifier. Their work also focuses on the optimization of the hash tables and the hashing function and on the possibility to partition the \gls{FIB} table among multiple processing cores.
+
+In another work, Perino et al.\cite{caesar} have proposed Caesar, a 2-stage longest-prefix lookup algorithm based on a bloom filter that returns (with the possibility of false positives) the length of the prefix and a successive single lookup in the hash table, thus reducing the required memory access operations to two in most cases. Caesar also supports distributing the \gls{FIB} among the NPUs and GPU computation offloading.
+\todo[inline]{Their architecture looks more like a programmable router than a server with a fast line card, but I'm not sure I understood if there is a qualitative difference} 
+% It is worth noting that, unlike \gls{SDN} systems described above, the proposed architecture relies on data-plane computation to be executed on the line cards equipped with NPUs, each with its per-card 
+
+% [Non ho ben capito se e` vero]: It is worth noting that the mentioned works target programmable routers rather than general purpose servers with high-speed NIC cards, leveraging 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Augustus Content Router}
+\label{chap:augustus}
+
+\todo[inline]{Present the packet format\cite{icn-packet} and the protocol. Perhaps write the pseudo-code for the router functionality}
+
+\section{Standalone implementation}\label{sec:augustus.standalone}
+
+
+
+\subsection{PIT dimensioning and purging}\label{sec:augustus.standalone.pit}
+\todo[inline]{I spent 1.5 working days digging into it, I could spend a couple of words about  how we ended up choosing the size.}
+
+\section{Click module port}\label{sec:augustus.click}
+\todo[inline]{Design decisions for the click elements.
+Include the sample click configuration file (like the one I sketched at the very beginning)}
+
+\todo[inline]{Also discuss the choice of changing the data structures layout}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter{Experimental evaluation}
+\label{chap:test}
+
+\section{Testing environment}\label{sec:test.env}
+The experimental setup was made of two twin machines, each equipped with two 10 Gbps Ethernet ports:
+table \ref{tab:test.hw} summarises their hardware components.
+
+\begin{table}[tb]
+  \begin{center}
+    \begin{tabular}{ll}
+      \toprule
+      %\midrule
+      CPUs   & 2 $\times$ Intel(R) Xeon(R) CPU E5-2630 v3 @ 2.40GHz \\
+      Memory & 4 $\times$ 16 GB @ 1866 MHz\\
+      NICs   & 2 $\times$ Intel 82599ES 10-Gigabit SFI/SFP+ Network Connection \\
+             & 2 $\times$ Intel I350 Gigabit Network Connection \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+  %\vspace{-.5cm} % prevents latex from preferring to put this in a blank page
+  \caption{Hardware configuration for the two test servers}
+  \label{tab:test.hw}
+\end{table}
+
+Only the 10 Gbps ports were used for the measurements: corresponding ports in the two machines were connected with passive copper cables attached to the SPF+ ports. On each server, one Gigabit port was used for a management connection, while the remaining port was left unused.
+
+The machines were running Linux 3.16. Following installation recommendation by the DPDK authors, the command line for the kernel provided the allocation of 1 GB huge pages, which were then mounted with the dedicated pseudo-filesystem.%
+\footnote{\url{https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
+%\footnote{\url{https://web.archive.org/web/20150906011201/https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
+
+\subsection{CPUs and memory layout}\label{sec:test.hw.layout}
+\todo[inline]{Describe (and possibly sketch) the layout. I can then reference to here when discussing the performance-over-cpu choice test}
+
+\section{Accounting for Ethernet overhead}\label{sec:test.overhead}
+\todo[inline]{just 1 or 2 paragraph describing the dashed line in }
+
+\section{Traffic generator}\label{sec:test.traffgen}
+\todo[inline]{Roughly describe the traffic generator/echo server}
+
+\subsection{Generation performance}
+\todo[inline]{Present the results for the cases with the generator loop connection}
+
+%  SIMPLE PICTURE
+%\begin{figure}[htb]
+%  \begin{center}
+%    \frame{\includegraphics[width=.6\textwidth]{img/maps/pinzolo_slopes.pdf}}
+%    \caption[Available maps for Pinzolo ski area]{Available maps for Pinzolo ski area.}
+%    \label{fig:map-input}
+%  \end{center}
+%\end{figure}
+
+% CITE
+%In order to achieve this, the map was converted to a 0/1 raster map and the algorithm described in \cite{rthin-algorithm} was run on the rasterized map. %, obtaining the map represented in Figure~\ref{fig:map-thinned}.
+
+
+% TEXTTTT (MONO)
+%In particular, \texttt{v.to.rast} module was , single empty pixels surrounded by four filled pixels were forced to be filled.
+%However, because it doesn't natively handle topology maps, the obtained refined map was imported back to GRASS GIS, where the topology was finalized and explicit nodes were created using \texttt{v.net} with \texttt{operation\,=\allowbreak\,nodes} (accompanied by \texttt{v.db.addtable} and \texttt{v.category} for properly setting up the attribute table), and spatial attributes like length of edges and altitude of nodes were attached to the respective features.
+
+% ALGORITHM
+\begin{comment}
+\begin{algorithm}[htb]
+%\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \KwIn{$passages$}
+  $passages.sort\_by(\lambda p . new~Couple(p.skipass, p.timestamp))$\;
+  $prev := null$\;
+  \ForEach{$p \in passages$}{
+    $is\_descent := \backslash$\;
+    \Indp
+      $prev \neq null  \wedge  prev.skipass = p.skipass~\backslash \wedge~prev.day = p.day$\;
+    \Indm
+    \If{$is\_descent$}{
+      \tcp{process descent identified by $prev$ and $p$}
+    }
+    $prev := p$\;
+  }
+  \caption[Descents identification]{\textsc{Descents identification}}
+  \label{algo:descents}
+\end{algorithm}
+\end{comment}
+
+\begin{comment}
+\begin{table}[tb]
+  \begin{center}
+    \begin{tabular}{lrrrrr}
+      \toprule
+        \multicolumn{1}{c}{SD pair} &
+        \multicolumn{1}{c}{\specialcell[3cm]{Descents\\percentage}} &
+        \multicolumn{1}{c}{\specialcell[3cm]{Log-\\normal}} &
+        \multicolumn{1}{c}{Gamma} &
+        \multicolumn{1}{c}{Beta} &
+        \multicolumn{1}{c}{\specialcell[3cm]{Generalized\\gamma}}\\
+      \midrule
+      \csvreader[%head to column names,
+                 head = true,
+                 before line = \\,
+                 before first line = {},
+                ]
+                {tables/fitting_quality.csv}{}{\csvlinetotablerow}
+      \\\bottomrule
+    \end{tabular}
+  \end{center}
+  \vspace{-.5cm} % prevents latex from prefering to put this in a blank page
+  \caption[Travel time fitting quality]{Fitting quality for some common distributions for every valid SD pair, after applying lunch filtering. SD pairs are identified by the node labels in fig, the second column indicates the percentage of descents for that SD pair with respect to total valid descents. Best fitting values for each row are in bold.}
+  \label{tab:traffic-lognorm-fitting}
+\end{table}
+\end{comment}
+
+
+\begin{comment}
+\begin{figure}[hbt]
+  \begin{center}
+    %\includegraphics[width=\textwidth]{img/traffic/brenta_groups.pdf}
+    \begin{tikzpicture}
+      \node (hist) {\includegraphics[width=\textwidth]{img/traffic/brenta_groups.pdf}};
+      \node (bwplot) at (hist.north east) [anchor=north east,yshift=-.8cm,xshift=-.9cm]
+        {\includegraphics[width=.5\textwidth]{img/traffic/brenta_groups_bw.pdf}};
+    \end{tikzpicture}
+    \caption[Travel times distributions by group type]{Travel times distributions by group type on Brenta slope. Top panel show the travel time histograms for the identified group types, bottom panel shows a zoom of the same plot on low values. In the box, the representation of the same data as a box plot. Gray lines are log-normal best fitting curves. Note that, in this case, last 5 percentiles were removed independently from each group.}
+% not-TODO: provare con il fitting anche sulle curve singole, che sembrano simili?
+    \label{fig:traveltimes-groups}
+  \end{center}
+\end{figure}
+\end{comment}
+
+
+\chapter{Conclusions}
+
+This work approached the analysis of skiing traffic with the construction of a novel framework: it includes the needed geographical pre-processing tools and implements a set of ad-hoc algorithms for skiing traffic analysis.
+
+The implemented functions were run on the $2\,521\,385$ lift rides case study dataset: this way, a first system of statistical results was obtained.
+
+Throughout this process, it was important to focus on skiing groups: in fact, the implemented grouping algorithm highlights that nearly $90\%$ of descents are taken by skiers moving in groups.
+Furthermore, an application of traffic analysis to accidents epidemiology was investigated with the introduction of a traffic-based normalization of accidents data which led to the capability of constructing normalized risk analysis for parts of the case study area.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Future work}
+\label{sec:future-work}
+
+ One limitation of the described algorithms is that they are not able to determine the distribution of skiers over the possible slopes that connect two nodes. A possible approach to overcome this limitation would be to distribute a mobile application for tracking skiers in their movements along slopes and lifts using the phone's GPS sensor; of course, the application would offer some services like displaying some basic analysis of the user's tracks so that more skiers would be interested in using it. This way, skiers could be tracked during their descents, and their paths could be the base for building or validating a model for the distributions of skiers in the whole ski area.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\listoffigures
+{
+  %\let\cleardoublepage\clearpage  % this prevents 2 blank pages between listof*
+%  \listoftables
+
+%  \cleardoublepage
+%  \phantomsection
+%  \addcontentsline{toc}{chapter}{List of Algorithms}
+%  \listofalgorithms
+}
+
+\bibliography{davide_kirchner_thesis}
+
+
+%\printindex  % don't know what this is for, was suggested for glossary...
+\printglossaries
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+~\newpage ~\newpage
+
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+
+
+\end{document}
