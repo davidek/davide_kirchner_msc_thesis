@@ -106,7 +106,9 @@
   \vspace{3cm}
 
   \begin{center}
-    \begin{Large}Some title containing SDN\\\end{Large}
+    \begin{Large}
+      Performance evaluation and design of a software Information Centric
+      Networking router\\\end{Large}
     \vspace{3cm}
   \end{center}
 
@@ -222,12 +224,12 @@ the option to leverage on modern NIC cards' hardware multi-queue system, allowin
 Performance-wise, the two libraries are comparable and both were shown to outperform the basic Linux and BSD network stacks; DPDK has been documented to behave slightly better in some applications\cite{fastclick}.
 
 
-\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks have been developed in order to ease the implementation of custom router/middlebox functionalities, bundled with commonly used components and sample applications. Many of them are directly or indirectly based on Click\cite{click}, which allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{components}, that process each packet in cascade.
+\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks have been developed in order to ease the implementation of custom router/middlebox functionalities, bundled with commonly used components and sample applications. Many of them are directly or indirectly based on Click\cite{click}, which allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{elements}, that process each packet in cascade.
 Barbette et al.\cite{fastclick} approached this by forking Click and addressing its bottlenecks one by one in the light of the newly available hardware and fast I/O libraries, resulting in the open-source FastClick. Another approach, pursued by Kim et al.\cite{nba}, fully implemented a (closed-source) Click-like middlebox programming framework re-using (and extending) only the original Click configuration parser.\todo{These 2 seem the most recent, taking some ideas from DoubleClick and Snap}
 
 FastClick and NBA share a number of features:
 fully exploit zero-copy I/O and hardware multi-queuing;
-take advantage of I/O bathing and bring the idea further to computation batching;
+take advantage of I/O batching and bring the idea further to computation batching;
 use a run-to-completion (also called full-push, in contrast with pipelined or push-pull) execution model, meaning that a single thread will handle all the components that act on the same packet batch;
 handle computation and I/O in a NUMA-aware fashion.
 Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors such as GPUs (used ) allowing for an equivalent CPU-only implementation of each \emph{offloadable} component: it is then capable of dynamically balance (hence the name) the computation among the CPU and the co-processors, which are only used under heavy workload as their usage negatively impacts latency. In their tests, NBA authors ran a sample IPv4 routing application on a machine with 16-cores, 4x 2x 10 Gbps NIC cards and 5 GPUs yielding about 60 Gbps (with 64B packets). On their side, the FastClick authors obtained a 30 Gbps throughput with a router application running on 4 cores and 2x 2x 10 Gbps NIC cards with the same minimal packet size. \todo{convert to pkts per sec?}

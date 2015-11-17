@@ -1,9 +1,12 @@
 # Build the latex doc, ralying on latexmk
 
 DOCNAME = davide_kirchner_thesis
+SLIDES = davide_kirchner_thesis_slides
+HANDOUT = davide_kirchner_thesis_handout
+STATEOFTHEART = kirchner_preliminary_stateoftheart
 
 .PHONY: all
-all: $(DOCNAME).pdf kirchner_preliminary_stateoftheart.pdf
+all: $(DOCNAME).pdf $(SLIDES).pdf $(HANDOUT).pdf $(HANDOUT)-2p.pdf
 
 # CUSTOM BUILD RULES
 
@@ -41,16 +44,48 @@ tex_outdir/$(DOCNAME).pdf: $(DOCNAME).tex
 $(DOCNAME).pdf: tex_outdir/$(DOCNAME).pdf
 	ln -s -f tex_outdir/$(DOCNAME).pdf $(DOCNAME).pdf
 
-.PHONY: tex_outdir/kirchner_preliminary_stateoftheart.pdf
-tex_outdir/kirchner_preliminary_stateoftheart.pdf: kirchner_preliminary_stateoftheart.tex
+.PHONY: tex_outdir/$(STATEOFTHEART).pdf  # latexmk shall always run
+tex_outdir/$(STATEOFTHEART).pdf: $(STATEOFTHEART).tex
 	latexmk -pdf -outdir=tex_outdir \
 		-pdflatex="pdflatex" \
 		-use-make \
-		kirchner_preliminary_stateoftheart.tex
+		$(STATEOFTHEART).tex
+	@# my pdflatex does not seem to understand this:
+	@#-pdflatex="pdflatex -interactive=nonstopmode" \
 
-kirchner_preliminary_stateoftheart.pdf: tex_outdir/kirchner_preliminary_stateoftheart.pdf
-	ln -s -f tex_outdir/kirchner_preliminary_stateoftheart.pdf kirchner_preliminary_stateoftheart.pdf
 
+$(STATEOFTHEART).pdf: tex_outdir/$(STATEOFTHEART).pdf
+	ln -s -f tex_outdir/$(STATEOFTHEART).pdf $(STATEOFTHEART).pdf
+
+.PHONY: tex_outdir/$(SLIDES).pdf  # latexmk shall always run
+tex_outdir/$(SLIDES).pdf: $(SLIDES).tex
+	latexmk -pdf -outdir=tex_outdir \
+		-pdflatex='pdflatex' \
+		-use-make \
+		$(SLIDES).tex
+	@# my pdflatex does not seem to understand this:
+	@#-pdflatex="pdflatex -interactive=nonstopmode" \
+
+
+$(SLIDES).pdf: tex_outdir/$(SLIDES).pdf
+	ln -s -f tex_outdir/$(SLIDES).pdf $(SLIDES).pdf
+
+.PHONY: tex_outdir/$(HANDOUT).pdf  # latexmk shall always run
+tex_outdir/$(HANDOUT).pdf: $(HANDOUT).tex
+	latexmk -pdf -outdir=tex_outdir \
+		-pdflatex="pdflatex" \
+		-use-make \
+		$(HANDOUT).tex
+	@# my pdflatex does not seem to understand this:
+	@#-pdflatex="pdflatex -interactive=nonstopmode" \
+
+
+$(HANDOUT).pdf: tex_outdir/$(HANDOUT).pdf
+	ln -s -f tex_outdir/$(HANDOUT).pdf $(HANDOUT).pdf
+
+$(HANDOUT)-2p.pdf: tex_outdir/$(HANDOUT).pdf
+	pdfnup --a4paper --keepinfo --nup 1x2 --frame true \
+	  --scale 0.90 --delta '1cm 1cm' --no-landscape --outfile $@ $<
 
 # vim spellfile
 .vimspell.words.add.spl: .vimspell.words.add

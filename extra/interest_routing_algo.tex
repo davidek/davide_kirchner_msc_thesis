@@ -1,0 +1,14 @@
+\If{$p.name \in ContentStore.names()$}{
+  $nexthop := p.source\_hop$\;
+  $nexthop.send(ContentStore.get\_data(p.name))$\;
+}
+\ElseIf{$p.name \in PendingInterestTable.names()$}{
+  $PendingInterestTable.aggregate\_entry(p.name)$\;
+}
+\ElseIf{$any\ prefix\ of\ p.name\ matches\ ForwardingInfoBase$}{
+  $nexthop := ForwardingInfoBase.longestPrefixMatch(p.name)$\;
+  $nexthop.send(p)$\;
+}
+\Else{
+  \tcp{Drop}
+}

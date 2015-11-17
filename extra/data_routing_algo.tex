@@ -1,0 +1,10 @@
+$ContentStore.store(p)$\;
+\If{$p.name \in PendingInterestTable.names()$}{
+  $nexthops := PendingInterestTable.remove(p.name)$\;
+  \ForEach{$nexthop \in nexthops$}{
+    $nexthop.send(p)$\;
+  }
+}
+\Else{
+  \tcp{Drop}
+}

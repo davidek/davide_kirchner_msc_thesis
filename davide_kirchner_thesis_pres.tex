@@ -1,0 +1,329 @@
+\usetheme[progressbar=frametitle,everytitleformat=regular]{m}
+
+\usepackage{booktabs}
+\usepackage[scale=2]{ccicons}
+
+\usepackage{pgfplots}
+\usepgfplotslibrary{dateplot}
+
+%\usepackage{titling}  % for \thetitle macro
+\usepackage[vlined]{algorithm2e}
+\newcommand{\mono}[1]{\texttt{#1}}
+\usepackage{comment}
+\usepackage{verbatim}
+\usepackage{pgf}  % for matplotlib-exported images
+\usepackage{tikz}
+
+\setbeamerfont{itemize/enumerate subbody}{size=\small} % body size
+\setbeamertemplate{itemize subitem}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\circ$}}  % symbol size
+
+% don't count bibliography and extra slides for the progress bar
+% from http://stackoverflow.com/a/2370399/1319447
+\newcommand{\extraslidesbegin}{
+  \newcounter{framenumbervorappendix}
+  \setcounter{framenumbervorappendix}{\value{framenumber}}
+}
+\newcommand{\extraslidesend}{
+  \addtocounter{framenumbervorappendix}{-\value{framenumber}}
+  \addtocounter{framenumber}{\value{framenumbervorappendix}} 
+}
+
+\title{Performance evaluation and design\\of a software Information Centric Networking router}
+\subtitle{M.Sc. thesis preliminary}
+\date{\today}
+\author{Davide Kirchner}
+\institute{University of Trento / Scuola Superiore Sant'Anna}
+%\titlegraphic{\hfill\includegraphics[height=1.5cm]{img/unitn_logo.pdf}}
+
+%\usepackage{biblatex}
+%\addbibresource{davide_kirchner_thesis.bib}
+%\usepackage{bibentry}
+%\nobibliography*
+
+\begin{document}
+
+% make progress bar end at page 18 (questions?), excluding references
+%\renewcommand{\inserttotalframenumber}{18}
+
+\maketitle
+
+\begin{frame}[fragile]
+  \frametitle{Table of Contents}
+  \setbeamertemplate{section in toc}[sections numbered]
+  %\tableofcontents[hideallsubsections]
+  \tableofcontents
+\end{frame}
+
+\section{Introduction}
+
+\subsection{Software defined networking}
+\begin{frame}[fragile]
+  \frametitle{Software defined networking}
+  \pause
+  Why software router? \pause Flexibility:
+  \begin{itemize}
+    \item Increasingly complex network functionalities
+    \item Quicker development/deployment cycle and (re)configuration
+    \item Notable example: the \textit{Click} modular router \cite{click}
+    \item Hardware can be dynamically allocated to different network functions
+    \item Can even be virtualized%
+      \ \cite{clickos,netvm}
+      %: \textit{ClickOS} \cite{clickos}, \textit{NetVM} \cite{netvm}
+      %\footnote{\bibentry{clickos}}
+  \end{itemize}
+  \pause 
+  Why now? \pause
+  \begin{itemize}
+    \item Off-the-shelf high-performance hardware
+    \item High-speed packet I/O libraries%
+      \ \cite{dpdk,netmap}
+      %: \textit{DPDK} \cite{dpdk}, \textit{Netmap} \cite{netmap}
+    \item Software routing frameworks built on top \cite{fastclick,nba}
+  \end{itemize}
+\end{frame}
+
+\subsection{Information centric networking}
+\begin{frame}[fragile]
+  \frametitle{Information Centric Networking}
+  \pause
+  \textbf{Host-centric} networking (IP): retrieve \mono{unitn.it/about/intro.mp4}
+  \pause
+  \begin{itemize}
+    \item Get the address of \mono{unitn.it}
+    \item Ask your router to deliver a request for \mono{/about/intro.mp4} to that host
+    \item Wait for the data
+  \end{itemize}
+  \pause
+  \textbf{Information-centric} networking: retrieve \mono{it/unitn/about/intro.mp4}
+  \pause
+  \begin{itemize}
+    \item Ask your router for the file \mono{it/unitn/about/intro.mp4}
+    \item Wait for the data
+  \pause
+    \item[$\rightarrow$]
+      The network will take care of fetching the content
+    \item[$\rightarrow$]
+      Allows for transparent in-network \textbf{caching}
+  \end{itemize}
+\end{frame}
+
+
+\section{The Augustus ICN router}
+
+\begin{frame}[fragile]
+  \frametitle{The Augustus\footnote{By Alcatel-Lucent Bell labs, based on the \textit{Caesar} \cite{caesar} router} ICN router}
+  \pause
+  \begin{itemize}
+    \item Two packet types: \textbf{interest} and \textbf{data} \textrm{} \cite{icn-packet}
+    \item Both headers hold a required variable-length, \textbf{name}
+    \item Names are a sequence of slash-separated \textbf{components}
+  \end{itemize}
+  \pause
+  Routing is based on three data structures:
+  \pause
+  \begin{itemize}
+    \item
+      Forwarding Information Base (FIB)
+      \begin{itemize}
+        \item Next-hop information for the source of a name (or prefix)
+      \end{itemize}
+      \pause
+    \item
+      Pending Interest Table (PIT)
+      \begin{itemize}
+        \item Next-hop for the client that requested a resource
+      \end{itemize}
+      \pause
+    \item
+      Content Store (CS)
+      \begin{itemize}
+        \item Local cache for recently-requested data
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\subsection{Routing in ICN}
+\begin{frame}[fragile]
+  \frametitle{Routing in ICN - Interest packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: ICN interest packet}
+    \input{extra/interest_routing_algo.tex}
+    %\caption{\textsc{ICN interest route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in ICN - Data packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: ICN data packet}
+    \input{extra/data_routing_algo.tex}
+    %\caption{\textsc{ICN data route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Pending Interest Table parameters tuning}
+
+  \begin{itemize}
+    \item<+-> Implemented as a hash table and a ring
+      \begin{itemize}
+        \item The hash table only stores pointers to the ring, to keep it small
+        \item Entries are timestamped: when stale, they must be purged
+        \item Purging is currently performed online
+      \end{itemize}
+    \item<+-> With a time-to-live of $1 s$, at $5.5 Mpps$: at least $5.5$ millions entries ($528 MB$)
+    \item<+-> A single expiring entry can linger at the bottom for $1 s$ causing the ring to fill up
+    \item<+-> Cleaning up the whole buffer takes in the order of $10 ms$
+      \begin{itemize}
+        \item For comparison, routing a single packet takes about $800 ns$ on average
+        \item About $55000$ consecutive packets may go lost during purging
+      \end{itemize}
+    \item<+-> What remedies?
+      \begin{itemize}
+        \item Current hack: limit the number of packets purged in a raw (increasing the size accordingly)
+        \item Use a plain hash table (less cache-friendly)?
+        \item Asynchronous purge, with lock-free synchronization (single producer, single consumer)?
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\section{Performance evaluation}
+
+\begin{frame}[fragile]
+  \frametitle{Experimental setup}
+  \begin{itemize}
+    \item Two twin machines, each with two 10GBps Ethernet ports
+    \item All names have the same length (three components)
+    \item Initially, every interest packet has a unique name: no CS hits
+    \item Initially, the FIB only contains one entry of length 1 which matches all interests
+    \item Throughput is measured at the level of Ethernet payload
+  \end{itemize}
+
+  \begin{figure}
+    \includegraphics[height=.5\textheight]{img/test_setup.pdf}
+    \caption{Experimental setup {\tiny{TODO: better figure}}}
+  \end{figure}
+\end{frame}
+
+
+\subsection{Packet generator}
+\begin{frame}[fragile]
+  \frametitle{Packet generator and echo server}
+
+  \begin{figure}
+    \includegraphics[height=.65\textheight]{img/gen_loop_increasing_len.pdf}
+    \caption{Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server}
+  \end{figure}
+\end{frame}
+
+
+\subsection{Router performance}
+
+\begin{frame}[fragile]
+  \frametitle{Router performance over packet size: single-core}
+  
+  \includegraphics[width=\textwidth]{img/augustus_increasing_len_0x1.pdf}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Router performance: threads and core mapping}
+  %\begin{comment}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.6\textwidth}
+    %\resizebox{!}{.9\textheight}{%
+    %  \input{img/augustus_multithread2.pgf}
+    %}
+    \onslide<+->{
+      \includegraphics[width=\textwidth]{img/augustus_multithread2.pdf}
+    }
+
+    \column{0.4\textwidth}
+    \vspace{.1\textheight}
+    \begin{tikzpicture}
+      \onslide<+->{
+        \node (img1) {\includegraphics[width=\textwidth]{img/cpus_horiz.pdf}};
+      }
+      \onslide<+->{
+        \node (img2) at (img1) {\includegraphics[width=\textwidth]{img/cpus_horiz_0x3003.pdf}};
+      }
+    \end{tikzpicture}
+  \end{columns}
+  %\end{comment}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Router performance over packet size: multi-core}
+  
+  \includegraphics[width=\textwidth]{img/augustus_increasing_len_0x3003.pdf}
+\end{frame}
+
+\section{Preliminary conclusions}
+\begin{frame}[fragile]
+  \frametitle{Preliminary conclusions}
+  \begin{itemize}
+    \item Line rate was reached with packets of $220$ bytes ($\sim180$ bytes application-level payload),\\
+      thus showing the feasibility of deploying an ICN router on current hardware
+    \item Care must be taken in the configuration and deployment (must be memory-layout aware)
+    \item The PIT purging strategy could benefit from a redesign
+  \end{itemize}
+%\end{frame}
+%\begin{frame}[fragile]
+%  \frametitle{Missing bits}
+
+  \onslide<+->
+  \onslide<+->
+  Missing bits:
+
+  \begin{itemize}
+    \item<+-> How does it scale with FIB size?
+    \item<+-> So far, the local cache was just a burden (kept up-to-date, but any lookup fails): what improvements could we get with web-like traffic?
+    \item<+-> A port of the software as a module (\textit{element}) for the Click router is in progress: what's the impact on performance?
+  \end{itemize}
+\end{frame}
+
+
+% copying some code from the \plain command, adding <handout:0>
+%\plain<handout:0>{% .........
+\begingroup
+\setbeamercolor{background canvas}{
+  use=palette primary,
+  parent=palette primary
+}
+\begin{frame}<handout:0>[plain,c,fragile]
+  \begin{center}
+    \usebeamercolor[fg]{palette primary}
+    \usebeamerfont{section title}
+    {\normalsize Performance evaluation and design \\[-6pt]
+     of a software Information Centric Networking router}
+
+    \vspace{1em}
+
+    Questions?
+  \end{center}
+\end{frame}
+\endgroup
+
+\extraslidesbegin
+
+\begin{frame}[allowframebreaks]
+  \frametitle{References}
+
+  \setbeamertemplate{bibliography item}[text]
+  \bibliography{davide_kirchner_thesis}
+  \bibliographystyle{alpha}
+\end{frame}
+
+
+\section*{Lost slides}
+\begin{frame}[fragile]
+  \frametitle{Click interface \textit{(in progress)}}
+  \verbatiminput{extra/icnrouter.click}
+\end{frame}
+
+\extraslidesend
+
+\end{document}
+
+              
