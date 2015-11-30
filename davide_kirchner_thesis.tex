@@ -16,6 +16,11 @@
 \usepackage{comment}
 
 % added
+\usepackage{listings}
+ \lstset{basicstyle=\footnotesize\ttfamily}
+ %\lstset{basicstyle=\footnotesize,keywordstyle=\color{blue},}
+ %\lstset{basicstyle=\small\ttfamily,frame=single}
+ \AtBeginDocument{\DeclareCaptionSubType{lstlisting}} % must stay between listings and subcaption
 \usepackage{subcaption}
 \usepackage[super]{nth}
 %\usepackage[xindy,toc]{glossaries}
@@ -229,7 +234,7 @@ Back in 2000, these motivations brought Kohler et al. \cite{click} to develop th
 
 Among these libraries, the most recent are the open-source netmap\cite{netmap} and DPDK\cite{dpdk}%
 %\todo{others are psio (PacketShader I/O Engine) and PF RING ZC but I did't look into them deeply, they seem relatively outdated}
-: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of the packet's content, relying solely the DMA write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
+: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of the packet's content, relying solely the \gls{DMA} write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
 
 Other features shared by both libraries are:
 the possibility to receive in batches (thus amortising the cost of the required syscalls and interrupts management among a batch of packets);
@@ -288,19 +293,20 @@ In another work, Perino et al.\cite{caesar} have proposed Caesar, a 2-stage long
 \label{chap:augustus}
 
 The \textit{Augustus} content router has been developed at Alcatel-Lucent Bell Labs\footnote{\url{https://www.alcatel-lucent.com/bell-labs}} as a software implementation of a \gls{CCN} router:
-it is based on DPDK \cite{dpdk} for managing packet I/O directly in userspace.
+it is written in C and based on DPDK \cite{dpdk} for managing packet I/O directly in userspace.
 
-It is worth mentioning that, at the moment, the router does not implement any protocol for the dissemination of routing information (control plane): instead, it implements the data plane packet processing and relies on routes being pre-loaded on the router. The reason is that, at this stage, the aim is to assess the performance of data plane routing in order to determine what could be the scale of a deployment using this technology.
+Note that, at the moment, the router does not implement any protocol for the dissemination of routing information (control plane): instead, it implements the data plane packet processing and relies on routes being pre-loaded on the router. The reason is that, at this stage, the aim is to assess the performance of data plane routing in order to determine what could be the scale of a deployment using this technology.
 
-This chapter starts providing an overview of the CCN routing protocol (section~\ref{sec:augustus.ccn}) and continues detailing the design choices and some implementation details for the involved data structures (sections~\ref{sec:augustus.cs} through \ref{sec:augustus.fib}).
-In particular, the \gls{PIT} implementation was found to have strong limitations and a new approach is proposed in section~\ref{sec:augustus.pit.new}.
+This chapter starts providing an overview of the CCN routing protocol (section~\ref{sec:augustus.ccn}) and continues detailing the design choices and some implementation details for the involved data structures (sections~\ref{sec:augustus.cs} through \ref{sec:augustus.fib});
+in particular, the \gls{PIT} implementation was found to have strong limitations and a new approach is proposed in section~\ref{sec:augustus.pit.new}.
+Section~\ref{sec:augustus.numa} details the strategies adopted to better exploit multiprocessor architectures.
 Finally, section~\ref{sec:augustus.click} presents a possible structure for a set of \textit{Click} elements implementing the same functionality. The full implementation and performance comparison is, however, left for a future work.
 
 \section{CCN routing protocol}\label{sec:augustus.ccn}
 \begin{algorithm}[htb]
 %\begin{algorithm}[H]
   \DontPrintSemicolon
-  \KwIn{$p$: ICN data packet}
+  \KwIn{$p$: ICN packet}
   \If{p.is\_interest()}{
     \input{extra/interest_routing_algo.tex}
   }
@@ -323,13 +329,144 @@ This way, the network holds in the routers' \gls{PIT}s a soft-state holding the 
 
 Moreover, although this was not included in the initial description, each interest packet is annotated with a random \textit{nonce} that is used to detect cyclic forwarding of the same packet and break the loop.
 
-\section{Content Store}\label{sec:augustus.cs}
 
-\section{Pending Interest Table}\label{sec:augustus.pit}
+\section{Routing data structures}\label{sec:augustus.structures}
+\todo[inline]{Spend some words on the general principles that (I believe) drove the data structures design: (no dynamically-allocated memory. Minimize stress on cache, as data structures are assumed not to fit in the cache and memory access is the bottleneck)}
 
-\subsection{Improved data structure design}\label{sec:augustus.pit.new}
+It is worth noting that the \gls{PIT} and the \gls{CS} structures need to be updated online during router operations: by contrast, the \gls{FIB} can be operated read-only in the data plane, similarly to classical IP routing tables: updates can be computed asynchronously in the control plane and hot-swapped with the previous version, in the assumption that the difference between subsequent versions will be small and thus only a very small fraction of packets will be mis-routed during the update.
 
-\section{Forwarding Information Base}\label{sec:augustus.fib}
+\subsection{Content Store}\label{sec:augustus.cs}
+The \gls{CS} holds the data packets that are available locally, implementing the in-network caching layer at the packet granularity. In the implementation, packets' content is never moved from the place where the \gls{DMA} operation placed it, in a memory area managed by the DPDK driver. Instead, the reference counters for the cached packets are increased so that the memory manager will not clean it up at sending time.
+
+As outlined in section~\ref{sec:augustus.ccn}, the CS is always queried for exact matches in the name, so a hash table provides a simple and effective way to index cached structures. Moreover, the original designers chose to keep each hash table entry as small as possible by storing pointers to a ring (implemented as a circular array), which in turn stores the complete metadata and the pointer to the full packet, as depicted in figure~\ref{fig:augustus.ht_ring}: this allows them to manage collisions by squeezing seven entries into fixed-sized buckets which can be fit into a single cache line. This architecture brings the number of cache misses per query to two in most cases: one for fetching the bucket and one for fetching the full metadata from the ring.
+
+In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
+
+\begin{figure}[htb]
+  \begin{center}
+    \frame{\includegraphics[width=1\textwidth]{img/cs_pit_sketch.png}}
+    \caption[Sketch for the data structure for the CS and orignal PIT.]{Sketch of the data structure for the CS. The original PIT design also used the same layout with a hash table and a ring.}
+    \label{fig:augustus.ht_ring}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htb]
+  \captionsetup{type=lstlisting}
+  %\centering
+  \begin{sublstlisting}[t]{.5\linewidth}
+    %\centering
+  \begin{lstlisting}[language=c]
+struct cs_ht_entry {
+ bool busy;
+ uint32_t crc;
+ uint32_t ring_index;
+};
+struct cs_ring_entry {
+ bool active;
+ char full_name[MAX_NAME_LEN];
+ struct dpdk_pkt *pkt;
+ // index in HT for cleanup
+ uint32_t bucket_index;
+ uint8_t tab_in_bucket;
+};
+    \end{lstlisting}
+    %\caption*{Slopes topology graph (Pinzolo).\\~}
+    \caption{CS internal fields}\label{lst:augustus.cs}
+  \end{sublstlisting}%
+  \begin{sublstlisting}[t]{.5\linewidth}
+    %\centering
+  \begin{lstlisting}[language=c]
+struct orig_pit_ht_entry {
+ bool busy;
+ uint32_t crc;
+ uint32_t ring_index;
+};
+struct orig_pit_ring_entry {
+ bool active;
+ uint64_t expiry;
+ uint64_t nonce_bf;
+ char full_name[MAX_NAME_LEN];
+ uint64_t interface_bitmask;
+ // index in HT for cleanup
+ uint32_t bucket_index;
+ uint8_t tab_in_bucket;
+};
+    \end{lstlisting}
+    %\caption*{Travel time distributions on Brenta slope for different groups types.}
+    \caption{PIT internal fields}\label{lst:augustus.oldpit}
+  \end{sublstlisting}
+  \caption[CS and original PIT internal data structures fields]{Internal data structures fields for CS and PIT (simplified for clarity and brevity).}\label{lst:augustus.cs_oldpit}
+\end{figure}
+
+\subsection{Pending Interest Table}\label{sec:augustus.pit}
+As the name suggests, the \gls{PIT} stores information for interests that have not been satisfied yet. This is the key structure for building the reverse path that a data packet will have to travel in order to reach the host requesting for it. Moreover, in case two clients request the same resource at about the same time, the PIT entries will be aggregated, thus building a multicast distribution tree for popular content.
+As with the \gls{CS}, the PIT is always queried for exact matches.
+
+Because a pending interest might stay so indefinitely (e.g. if the interest or data are lost upstream due to congestion), PIT entries need an expiry time that accounts for a worst-case round trip time from the router to the upstream resource. Meanwhile, long expiry times require the PIT to grow larger in order to fit all possible pending interests in the worst case.
+
+During the experiments, an expiry time of $1$ second was chosen, as it was considered large enough for country-scale geographical installations (even if probably too tight for intercontinental links). Assuming a throughput of $5.5$ \gls{Mpps} (a little above the one actually measured, as detailed in chapter~\ref{chap:test}), this results in a PIT with $5.5$ millions entries, corresponding to about $500$ MB.
+
+In its original implementation, the PIT layout was identical to the CS, with a stripped-down hash table and a ring storing most of the needed data. It obviously differs in the fields stored in the ring entry, as highlighted in listing\ref{lst:augustus.cs_oldpit}. The remaining parts of this section highlight the limitations of this approach and introduce an improved design overcoming them.
+
+\subsubsection{PIT purging issue}\label{sec:augustus.pit.purge}
+The described approach introduced the need for a PIT purging procedure: while the management of the ring structure is extremely simple and efficient when operated in a FCFS manner (as in the CS), it only allows a contiguous region of cells to be occupied. Thus, whenever a data packet comes that matches an entry other than  the bottom one, it has to be lazily deleted until all ``previous'' entries (i.e. the ones between the bottom pointer and the deleted one) are also deleted.  
+Thus, the purging procedure was designed in order to clean up space from the entries at the bottom of the ring that were either expired or lazily deleted.
+
+This procedure proved to work smoothly for the case where all interests were eventually satisfied. However, whenever even a single PIT entry came to expiry, it would prevent the purging procedure to be effective for $1$ second (the expiry time). In the meanwhile, when operating at the maximum rate, almost all the remaining entries would fill up and never get freed, blocked by the one bound to expire. Finally, after the expiration of the blocking entry, the purging procedure would free all the entries marked for deletion, up to the first valid one; at that point, the entries to be cleaned were often in the order of one million, causing the purge procedure to take $10$ to $15$ milliseconds to run: at the rate achieved by the router, this corresponds to about $13000$ to $20000$ packets that would be lost in a row.
+
+\subsubsection{Improved data structure design}\label{sec:augustus.pit.new}
+
+\begin{figure}[htb]
+  \begin{center}
+    \frame{\includegraphics[width=1\textwidth]{img/new_pit_sketch.png}}
+    \caption[Sketch for the improved PIT data structure]{Sketch for the improved PIT data structure.}
+    \label{fig:augustus.newpit}
+  \end{center}
+\end{figure}
+
+\begin{figure}[htb]
+  \captionsetup{type=lstlisting}
+  %\centering
+  \begin{sublstlisting}[t]{.5\linewidth}
+    %\centering
+  \begin{lstlisting}[language=c]
+struct pit_index_entry {
+ bool busy;
+ uint32_t crc;
+ uint64_t expiry;
+};
+struct pit_body_entry {
+ uint64_t nonce_bf;
+ char full_name[MAX_NAME_LEN];
+ uint64_t interface_bitmask;
+};
+    \end{lstlisting}
+    %\caption*{Slopes topology graph (Pinzolo).\\~}
+    \caption{Improved PIT internal fields}\label{lst:augustus.newpit}
+  \end{sublstlisting}%
+  \begin{sublstlisting}[t]{.5\linewidth}
+    %\centering
+  \begin{lstlisting}[language=c]
+struct orig_pit_ht_entry {
+  TODO
+};
+struct orig_pit_ring_entry {
+  TODO
+};
+    \end{lstlisting}
+    %\caption*{Travel time distributions on Brenta slope for different groups types.}
+    \caption{FIB internal fields}\label{lst:augustus.fib}
+  \end{sublstlisting}
+  \caption[Internal data structures fields for the improved PIT and the FIB]{Internal data structures fields for the improved PIT and the FIB (simplified for clarity and brevity).}\label{lst:augustus.newpit_fib}
+\end{figure}
+In order to overcome this issue, a new layout for the PIT was designed and implemented into the router: as depicted in figure~\ref{fig:augustus.newpit}, the new design relies solely on a hash table. Nevertheless, following the design principle that guided the original development, the first cache line of each bucket is used as an index for the ones to come: as detailed in listing~\ref{lst:augustus.newpit}, 
+
+Section~\ref{sec:test.pit} presents a comparison of packet loss when introducing the new PIT implementation.
+
+\subsection{Forwarding Information Base}\label{sec:augustus.fib}
+
+\section{Multi-threading and NUMA awareness}\label{sec:augustus.numa}
+\todo[inline]{}
 
 \section{Click module port}\label{sec:augustus.click}
 \todo[inline]{Design decisions for the click elements' API.
@@ -382,9 +519,9 @@ The machines were running Linux 3.16. Following installation recommendation by t
 \subsection{Generation performance}
 \todo[inline]{Present the results for the cases with the generator loop connection}
 
-\section{Single-thread routing}
+\section{Single-threaded routing}
 
-\section{Multi-thread routing}\label{sec:test.multicore}
+\section{Multi-threaded routing}\label{sec:test.multicore}
 
 \subsection{CPUs and memory layout}\label{sec:test.multicore.layout}
 \todo[inline]{Describe and sketch the layout.}
@@ -506,6 +643,8 @@ Furthermore, an application of traffic analysis to accidents epidemiology was in
 %  \phantomsection
 %  \addcontentsline{toc}{chapter}{List of Algorithms}
 %  \listofalgorithms
+
+%  and, moreover: \lstlistoflistings
 }
 
 \bibliography{davide_kirchner_thesis}
