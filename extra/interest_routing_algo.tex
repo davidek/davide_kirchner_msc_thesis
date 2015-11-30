@@ -3,11 +3,12 @@
   $nexthop.send(ContentStore.get\_data(p.name))$\;
 }
 \ElseIf{$p.name \in PendingInterestTable.names()$}{
-  $PendingInterestTable.aggregate\_entry(p.name)$\;
+  $PendingInterestTable.aggregate\_entry(p.name, p.source\_hop)$\;
 }
-\ElseIf{$any\ prefix\ of\ p.name\ matches\ ForwardingInfoBase$}{
-  $nexthop := ForwardingInfoBase.longestPrefixMatch(p.name)$\;
+\ElseIf{$any\ prefix\ of\ p.name \in ForwardingInfoBase$}{
+  $nexthop := ForwardingInfoBase.longestPrefixM(p.name)$\;
   $nexthop.send(p)$\;
+  $PendingInterestTable.add\_entry(p.name, p.source\_hop)$\;
 }
 \Else{
   \tcp{Drop}

@@ -23,14 +23,16 @@
 \usepackage[boxed,algochapter,vlined]{algorithm2e}
 \usepackage{indentfirst}  % Indent first line of first paragraph of chapters/sections/...
 \usepackage{tikz}
-\renewcommand{\bottomfraction}{0.6}
-\renewcommand{\topfraction}{0.8}
+\renewcommand{\bottomfraction}{0.6}  %
+\renewcommand{\topfraction}{0.8}     %  Fit more figures in text pages
+\newcommand{\mono}[1]{\texttt{#1}}
 
 % TODO notes
 \usepackage{xcolor}  % would anyway be imported by todonotes
 \colorlet{lightorange}{orange!40}  % 40% orange, 60% white
 \usepackage[colorinlistoftodos,linecolor=orange,backgroundcolor=lightorange]{todonotes}
 %% Usage: \todo{margin note} or \todo[inline]{note in a full-width box}
+
 \usepackage{csvsimple}  % read csv to table
 \usepackage{booktabs}   % table styling
 
@@ -116,7 +118,7 @@
   \begin{minipage}[t]{.7\linewidth}
     Supervisors:\\ 
     \textbf{Prof. Renato Lo Cigno}\\
-    \textbf{Prof. (co-supervisor)}
+    \textbf{Prof. Luca Valcarenghi}
   \end{minipage}%
   \begin{minipage}[t]{.25\linewidth}
     %~\\
@@ -205,18 +207,29 @@ I would like to express my gratitude to Cesare Furlanello, head of unit at MPBA,
 
 \chapter{Introduction}
 
-\section{State of the art}
+\todo[inline]{General intro}
 
-The recent availability of high-performance
-commodity off-the-shelf
-%\gls{COTS}
-hardware, ranging from multi-core CPUs to affordable 10 Gbps network cards, has boosted the possibilities offered by \gls{SDN}, allowing to run software-based network functions at, or close to, line speed.
+\section{Software defined networking}
+The growing availability of high-performance commodity off-the-shelf %\gls{COTS}
+hardware has made software more and more competitive even for performance-critical functions that have been traditionally implemented with dedicated hardware: in the networking domain, affordable 10 Gbps network cards together with multi-core CPUs and GPUs were the key enablers for this shift.
 
-\paragraph{High-speed packet I/O} Together with new hardware, one key improvement that has enabled this performance boost was the introduction of high-speed packet I/O libraries, all of which provide a way to bypass the OS basic network stack (which is flow-oriented and might involve a packet being copied a number of times in its way from the NIC card to the userspace memory) in order to optimize for packet-oriented processing.
+%\begin{figure}[htb]
+%  \begin{center}
+%    \frame{\includegraphics[width=.6\textwidth]{/tmp/figure_1.pdf}}
+%    \caption[Available maps for Pinzolo ski area]{Available maps for Pinzolo ski area.}
+%    \label{fig:map-input}
+%  \end{center}
+%\end{figure}
 
-Among these libraries are the open-source netmap\cite{netmap} and DPDK\cite{dpdk}
-\todo{others are psio (PacketShader I/O Engine) and PF RING ZC but I did't look into them deeply, they seem relatively outdated}
-: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of any packet, relying solely the DMA write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
+%The main advantage for choosing software over hardware is of course the greater flexibility: software allows for much quicker development-deployment cycles and simplifies the management enabling increasingly complex functions to be pushed towards the core of the networks.
+While this transition may be unlikely for traditional IP routing, where the scale fully justifies the development and production costs of dedicated hardware reaching the limits of routing capabilities, for applications ranging from firewalls to experimental routing protocols it's reasonable to trade-off some performance for increased flexibility and decreased development costs.
+Back in 2000, these motivations brought Kohler et al. \cite{click} to develop the \textit{Click Modular Router}, a complete and extensible framework for setting up complex network functionalities, which keeps receiving a lot of attention from the \gls{SDN} research community, as detailed hereafter. Click allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{elements}, that process each packet in cascade. % TODO: point to listing with click configuration file, or to section below?
+
+\paragraph{High-speed packet I/O} Together with new hardware, one key improvement that has enabled the recent performance boost of software-based routing was the introduction of high-speed packet I/O libraries, all of which provide a way to bypass the OS basic network stack, which is flow-oriented and might involve a packet being copied a number of times in its way from the NIC card to the userspace memory. %in order to optimize for packet-oriented processing.
+
+Among these libraries, the most recent are the open-source netmap\cite{netmap} and DPDK\cite{dpdk}%
+%\todo{others are psio (PacketShader I/O Engine) and PF RING ZC but I did't look into them deeply, they seem relatively outdated}
+: both of them optimize the I/O management to allow for zero-copy packet processing so that the software stack never makes copies of the packet's content, relying solely the DMA write operation performed by the input NIC card to a shared buffer that is directly accessed by the application code and, in case the packet is forwarded, by the output NIC card.
 
 Other features shared by both libraries are:
 the possibility to receive in batches (thus amortising the cost of the required syscalls and interrupts management among a batch of packets);
@@ -224,27 +237,38 @@ the option to leverage on modern NIC cards' hardware multi-queue system, allowin
 Performance-wise, the two libraries are comparable and both were shown to outperform the basic Linux and BSD network stacks; DPDK has been documented to behave slightly better in some applications\cite{fastclick}.
 
 
-\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks have been developed in order to ease the implementation of custom router/middlebox functionalities, bundled with commonly used components and sample applications. Many of them are directly or indirectly based on Click\cite{click}, which allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{elements}, that process each packet in cascade.
-Barbette et al.\cite{fastclick} approached this by forking Click and addressing its bottlenecks one by one in the light of the newly available hardware and fast I/O libraries, resulting in the open-source FastClick. Another approach, pursued by Kim et al.\cite{nba}, fully implemented a (closed-source) Click-like middlebox programming framework re-using (and extending) only the original Click configuration parser.\todo{These 2 seem the most recent, taking some ideas from DoubleClick and Snap}
+\paragraph{Routing software frameworks} On top op these libraries, higher-level frameworks ease the implementation of custom high-speed router/middlebox functionalities, bundled with commonly used components and sample applications, often directly or indirectly based on Click \cite{click}.
+Barbette et al.\cite{fastclick} approached this by forking Click and addressing its bottlenecks one by one in the light of the newly available hardware and fast I/O libraries, resulting in the open-source FastClick. Another approach, pursued by Kim et al. \cite{nba}, fully implemented a closed-source Click-like middlebox programming framework re-using (and extending) only the original Click configuration parser.\todo{These 2 seem the most recent, taking some ideas from DoubleClick and Snap}
 
 FastClick and NBA share a number of features:
 fully exploit zero-copy I/O and hardware multi-queuing;
 take advantage of I/O batching and bring the idea further to computation batching;
 use a run-to-completion (also called full-push, in contrast with pipelined or push-pull) execution model, meaning that a single thread will handle all the components that act on the same packet batch;
 handle computation and I/O in a NUMA-aware fashion.
-Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors such as GPUs (used ) allowing for an equivalent CPU-only implementation of each \emph{offloadable} component: it is then capable of dynamically balance (hence the name) the computation among the CPU and the co-processors, which are only used under heavy workload as their usage negatively impacts latency. In their tests, NBA authors ran a sample IPv4 routing application on a machine with 16-cores, 4x 2x 10 Gbps NIC cards and 5 GPUs yielding about 60 Gbps (with 64B packets). On their side, the FastClick authors obtained a 30 Gbps throughput with a router application running on 4 cores and 2x 2x 10 Gbps NIC cards with the same minimal packet size. \todo{convert to pkts per sec?}
+Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors such as GPUs, allowing for an equivalent CPU-only implementation of each \emph{offloadable} component: it is then capable of dynamically balance (hence the name) the computation among the CPU and the co-processors, which are only used under heavy workload, as they negatively impacts latency. In their tests, NBA authors ran a sample IPv4 routing application on a machine with 16-cores, 4x 2x 10 Gbps NIC cards and 5 GPUs yielding about 60 Gbps (with 64B packets). On their side, the FastClick authors obtained a 30 Gbps throughput with a router application running on 4 cores and 2x 2x 10 Gbps NIC cards with the same minimal packet size. \todo{convert to pkts per sec?}
 
-
-\paragraph{Virtualization} Another aspect that has been explored in literature is the possibility to run this kind of software functions on virtual machines, which goes under the name of \acrfull{NFV}.
+\paragraph{Virtualization} Another interesting application of software routers is the possibility to run network functions on virtual machines, which goes under the name of \acrfull{NFV}.
 Still allowing the flexibility introduced with \gls{SDN}, this is attractive to the cloud business in that it allows independent network functionalities to be deployed on the same hardware in isolation (both from a security point of view, and in memory/CPU shares) and offers the possibility to quickly and dynamically scale a service by allocating more equivalent VMs on different hardware. Of course, this comes at the price of adding one extra software layer between the NIC card and the application.
 
-One such work, developed by Martins et al.\cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a Linux installation running on the privileged dom0 domain: in order to boost performance, they relied on netmap\cite{netmap} and a custom virtual network driver dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC card, they obtained a throughput of little over 4 Mpps\todo{Gbps?} .
+One such work, developed by Martins et al.\cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a Linux installation running on the privileged dom0 domain: in order to boost performance, they relied on netmap\cite{netmap} on dom0, and wrote a custom virtual network driver for dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC card, they obtained a throughput of little over 4 Mpps\todo{Gbps?} .
 
 
 Different architecture choices have lead Hwang et al. to the development of NetVM\cite{netvm}: the authors relied on QEMU\footnote{http://www.qemu.org} and KVM acceleration to run Linux on the host machine and the guests, using a DPDK-based userspace driver on the host; with some custom zero-copy host-guest communication structure, NetVM offers to the guest application a userspace library. Although they ported the userspace Click version to work in their setup, the authors recommend cascading services offered by multiple VMs exploiting the optimized VM-to-VM communication, in a way treating VMs similarly to Click components. NetVM also offers basic trust-group management capabilities. Testing their system on a machine with 12 cores and a 10 Gbps NIC card, the authors claim full speed with a simple L3 forwarder and about 6 Gbps with a Click router.
 \todo[inline]{I initially thought it was nice to report here the performance achieved by the different software in the author's test to give an idea of the orders of magnitude involved. I now begin to wonder whether this is just confusing, as the numbers are totally uncomparable with each other.}
 
-\paragraph{Information-centric networking} One interesting application where \gls{SDN} is attractive is the development (and deployment) of middlebox software for \gls{ICN}\todo{some more context, perhaps some historical work that gave birth to the field?}, where routing and caching of data is often based on variable-length hierarchical resource identifiers: in this context, one critical bottleneck resides in the access to the routing table, that can grow much bigger than classical IP ones.
+\section{Information-centric networking}
+An independent branch in network research starts from the consideration that the modern web is growingly be used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
+and requested by clients B and C will have to travel twice through routers R1 and R2. Moreover, before being able to request the resource to host A, clients will need to query a name resolution service and obtain its address.
+
+In contrast, the \gls{ICN} paradigm aims at pushing the management of named resources into the network: in an ICN network, clients directly ask their router for a resource with a given name. The network will then take care of retrieving the requested resource regardless of where it's stored, and can exploit local cache at intermediate routers.
+
+\todo[inline]{More details on other approaches? ICN? \url{http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6231276} describes other approaches than the one I've focused on (CCN), should I mention them?}
+
+There have been several approaches following this general idea, differing in several design choices. This work focuses on \gls{CCN} \cite{ccn}.
+
+%\gls{ICN} routing is an interesting application where \gls{SDN} is attractive: while different approaches are under active development, software routing could allow to deploy such protocols and handle traffic at the scale of tens of Gbps on general-purpose hardwa
+
+One interesting application where SDN is attractive is the development (and deployment) of middlebox software for \gls{ICN}, where routing and caching of data is often based on variable-length hierarchical resource identifiers: in this context, one critical bottleneck resides in the access to the routing table, that can grow much bigger than classical IP ones.
 A key aspect to enable high-speed name-based routing is thus to optimize the data structures involved in the routing process: the \gls{FIB}, holding the name-interface association, which is queried for longest-prefix match; the \gls{PIT}, caching information of not-yet-evaded \emph{interest} packets received; and an index for locally-available cached content.
 
 So et al.\cite{ndn_fast_dosresistant} proposed an algorithm to perform the longest-prefix match in the \gls{FIB} using a hash-table guaranteeing bounded number of reads in the worst-case, regardless of the number of components in the requested resource identifier. Their work also focuses on the optimization of the hash tables and the hashing function and on the possibility to partition the \gls{FIB} table among multiple processing cores.
@@ -260,33 +284,67 @@ In another work, Perino et al.\cite{caesar} have proposed Caesar, a 2-stage long
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Augustus Content Router}
+\chapter{The Augustus content router}
 \label{chap:augustus}
 
-\todo[inline]{Present the packet format\cite{icn-packet} and the protocol. Perhaps write the pseudo-code for the router functionality}
+The \textit{Augustus} content router has been developed at Alcatel-Lucent Bell Labs\footnote{\url{https://www.alcatel-lucent.com/bell-labs}} as a software implementation of a \gls{CCN} router:
+it is based on DPDK \cite{dpdk} for managing packet I/O directly in userspace.
 
-\section{Standalone implementation}\label{sec:augustus.standalone}
+It is worth mentioning that, at the moment, the router does not implement any protocol for the dissemination of routing information (control plane): instead, it implements the data plane packet processing and relies on routes being pre-loaded on the router. The reason is that, at this stage, the aim is to assess the performance of data plane routing in order to determine what could be the scale of a deployment using this technology.
 
+This chapter starts providing an overview of the CCN routing protocol (section~\ref{sec:augustus.ccn}) and continues detailing the design choices and some implementation details for the involved data structures (sections~\ref{sec:augustus.cs} through \ref{sec:augustus.fib}).
+In particular, the \gls{PIT} implementation was found to have strong limitations and a new approach is proposed in section~\ref{sec:augustus.pit.new}.
+Finally, section~\ref{sec:augustus.click} presents a possible structure for a set of \textit{Click} elements implementing the same functionality. The full implementation and performance comparison is, however, left for a future work.
 
+\section{CCN routing protocol}\label{sec:augustus.ccn}
+\begin{algorithm}[htb]
+%\begin{algorithm}[H]
+  \DontPrintSemicolon
+  \KwIn{$p$: ICN data packet}
+  \If{p.is\_interest()}{
+    \input{extra/interest_routing_algo.tex}
+  }
+  \ElseIf{p.is\_data()}{
+    \input{extra/data_routing_algo.tex}
+  }
+  \caption[CCN routing]{\textsc{CCN routing}}
+  \label{algo:routing}
+\end{algorithm}
 
-\subsection{PIT dimensioning and purging}\label{sec:augustus.standalone.pit}
-\todo[inline]{I spent 1.5 working days digging into it, I could spend a couple of words about  how we ended up choosing the size.}
+The \gls{CCN} approach, first introduced by Jacobson et al. \cite{ccn} and adopted by the Named Data Networking initiative\footnote{\url{http://named-data.net/}}, relies on hierarchical names (e.g. \mono{/it/unitn/about/intro.mp4}) to address resources that fit a single packet (thus requiring to divide content into named chunks if it doesn't fit).
+
+The content delivery is based on two packet types: \textit{interest} packets are sent by a client requesting for a resource with a given name, while \textit{data} packets carry the resource itself. Both packets hold the full name of the resource, together with other information aiding the routing procedure.
+The Augustus router conforms to the specifications of an internet draft authored by the same research group at Bell labs \cite{icn-packet}.
+
+Routing is stateful and works hop-by-hop: algorithm~\ref{algo:routing} outlines the basic routing procedure. When an interest packet is received, its name is first checked in the \glsfirst{CS}: if a cached data packet is found the router simply replies with the data, else it is checked against the \glsfirst{PIT}: if a match is found, the PIT entry is aggregated to the existing entry (i.e. the sender is added to the set of neighbours interested in the resource); if, instead, the name does not match a pending interest, the router searches for the longest prefix match in the \glsfirst{FIB} for the next-hop information about where the content can be found, and the interest is stored in the PIT and forwarded.
+When a data packet is received it is first saved in the CS, in case it's later requested again; its name is then queried in the PIT: if a match is found, the data is forwarded to all neighbour hops where a previous interest for that data was received.
+
+This way, the network holds in the routers' \gls{PIT}s a soft-state holding the reverse path for each interest that has not yet been evaded: this is a key difference with respect to stateless routing (e.g. IP) and poses strong requirements over the dimension and management of the data structure, as discussed later in section~\ref{sec:augustus.pit}
+
+Moreover, although this was not included in the initial description, each interest packet is annotated with a random \textit{nonce} that is used to detect cyclic forwarding of the same packet and break the loop.
+
+\section{Content Store}\label{sec:augustus.cs}
+
+\section{Pending Interest Table}\label{sec:augustus.pit}
+
+\subsection{Improved data structure design}\label{sec:augustus.pit.new}
+
+\section{Forwarding Information Base}\label{sec:augustus.fib}
 
 \section{Click module port}\label{sec:augustus.click}
-\todo[inline]{Design decisions for the click elements.
-Include the sample click configuration file (like the one I sketched at the very beginning)}
+\todo[inline]{Design decisions for the click elements' API.
+Also include the sample click configuration file}
 
-\todo[inline]{Also discuss the choice of changing the data structures layout}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\chapter{Experimental evaluation}
+\chapter{Performance evaluation}
 \label{chap:test}
 
 \section{Testing environment}\label{sec:test.env}
-The experimental setup was made of two twin machines, each equipped with two 10 Gbps Ethernet ports:
+The experimental setup was composed of two twin machines, each equipped with two 10 Gbps Ethernet ports:
 table \ref{tab:test.hw} summarises their hardware components.
 
 \begin{table}[tb]
@@ -312,17 +370,28 @@ The machines were running Linux 3.16. Following installation recommendation by t
 \footnote{\url{https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 %\footnote{\url{https://web.archive.org/web/20150906011201/https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 
-\subsection{CPUs and memory layout}\label{sec:test.hw.layout}
-\todo[inline]{Describe (and possibly sketch) the layout. I can then reference to here when discussing the performance-over-cpu choice test}
+\todo[inline]{Picture of the servers' back panel and network connector}
+
 
 \section{Accounting for Ethernet overhead}\label{sec:test.overhead}
-\todo[inline]{just 1 or 2 paragraph describing the dashed line in }
+\todo[inline]{just 1 or 2 paragraph describing the dashed line in the plots}
 
 \section{Traffic generator}\label{sec:test.traffgen}
 \todo[inline]{Roughly describe the traffic generator/echo server}
 
 \subsection{Generation performance}
 \todo[inline]{Present the results for the cases with the generator loop connection}
+
+\section{Single-thread routing}
+
+\section{Multi-thread routing}\label{sec:test.multicore}
+
+\subsection{CPUs and memory layout}\label{sec:test.multicore.layout}
+\todo[inline]{Describe and sketch the layout.}
+
+\subsection{Performance by core mapping}\label{sec:test.multicore.performance}
+
+\section{Evaluation of the new PIT design}\label{sec:test.pit}
 
 %  SIMPLE PICTURE
 %\begin{figure}[htb]
