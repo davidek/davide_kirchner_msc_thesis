@@ -29,7 +29,7 @@
 \usepackage{indentfirst}  % Indent first line of first paragraph of chapters/sections/...
 \usepackage{tikz}
 \renewcommand{\bottomfraction}{0.6}  %
-\renewcommand{\topfraction}{0.8}     %  Fit more figures in text pages
+\renewcommand{\topfraction}{0.7}     %  Fit more figures in text pages
 \newcommand{\mono}[1]{\texttt{#1}}
 
 % TODO notes
@@ -331,17 +331,16 @@ Moreover, although this was not included in the initial description, each intere
 
 
 \section{Routing data structures}\label{sec:augustus.structures}
-\todo[inline]{Spend some words on the general principles that (I believe) drove the data structures design: (no dynamically-allocated memory. Minimize stress on cache, as data structures are assumed not to fit in the cache and memory access is the bottleneck)}
+As also suggested by the results detailed in the next chapter (section~\ref{sec:test.multicore}), the main bottleneck for routing performance consists of memory access. Indeed, all the data structures implemented into the Augustus router are cache-aware, relying on cache-aligned memory areas grouping in a single x86\_64 cache line ($64$ bytes) information that is needed at once at access time.
+This works best under the assumption that data structures do not fit in the processors' cache, thus cache space is the most scarce resource the router has to cope with.
+
+Moreover, all data structures are allocated at bootstrap time, so that no expensive memory management procedure needs to be called during data plane routing operations.
 
 It is worth noting that the \gls{PIT} and the \gls{CS} structures need to be updated online during router operations: by contrast, the \gls{FIB} can be operated read-only in the data plane, similarly to classical IP routing tables: updates can be computed asynchronously in the control plane and hot-swapped with the previous version, in the assumption that the difference between subsequent versions will be small and thus only a very small fraction of packets will be mis-routed during the update.
 
+The remaining of this section provides some implementation details for the three data structures involved in the routing procedure.
+
 \subsection{Content Store}\label{sec:augustus.cs}
-The \gls{CS} holds the data packets that are available locally, implementing the in-network caching layer at the packet granularity. In the implementation, packets' content is never moved from the place where the \gls{DMA} operation placed it, in a memory area managed by the DPDK driver. Instead, the reference counters for the cached packets are increased so that the memory manager will not clean it up at sending time.
-
-As outlined in section~\ref{sec:augustus.ccn}, the CS is always queried for exact matches in the name, so a hash table provides a simple and effective way to index cached structures. Moreover, the original designers chose to keep each hash table entry as small as possible by storing pointers to a ring (implemented as a circular array), which in turn stores the complete metadata and the pointer to the full packet, as depicted in figure~\ref{fig:augustus.ht_ring}: this allows them to manage collisions by squeezing seven entries into fixed-sized buckets which can be fit into a single cache line. This architecture brings the number of cache misses per query to two in most cases: one for fetching the bucket and one for fetching the full metadata from the ring.
-
-In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
-
 \begin{figure}[htb]
   \begin{center}
     \frame{\includegraphics[width=1\textwidth]{img/cs_pit_sketch.png}}
@@ -350,17 +349,24 @@ In order to exploit this structure, the name hash works in two stages: first, a 
   \end{center}
 \end{figure}
 
+The \gls{CS} holds the data packets that are available locally, implementing the in-network caching layer at the packet granularity. In the implementation, packets' content is never moved from the place where the \gls{DMA} operation placed it, in a memory area managed by the DPDK driver. Instead, the reference counters for the cached packets are increased so that the memory manager will not clean it up at sending time.
+
+As outlined in section~\ref{sec:augustus.ccn}, the CS is always queried for exact matches in the name, so a hash table provides a simple and effective way to index cached structures. Moreover, the original designers chose to keep each hash table entry as small as possible by storing pointers to a ring (implemented as a circular array), which in turn stores the complete metadata and the pointer to the full packet, as depicted in figure~\ref{fig:augustus.ht_ring}: this allows them to manage collisions by squeezing seven entries into fixed-sized buckets which can be fit into a single cache line. This architecture brings the number of cache misses per query to two in most cases: one for fetching the bucket and one for fetching the full metadata from the ring.
+
+In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
+
 \begin{figure}[htb]
   \captionsetup{type=lstlisting}
   %\centering
   \begin{sublstlisting}[t]{.5\linewidth}
     %\centering
-  \begin{lstlisting}[language=c]
+  \begin{lstlisting}[language=c,escapechar=\%]
 struct cs_ht_entry {
  bool busy;
  uint32_t crc;
  uint32_t ring_index;
 };
+
 struct cs_ring_entry {
  bool active;
  char full_name[MAX_NAME_LEN];
@@ -369,6 +375,7 @@ struct cs_ring_entry {
  uint32_t bucket_index;
  uint8_t tab_in_bucket;
 };
+%
     \end{lstlisting}
     %\caption*{Slopes topology graph (Pinzolo).\\~}
     \caption{CS internal fields}\label{lst:augustus.cs}
@@ -393,7 +400,7 @@ struct orig_pit_ring_entry {
 };
     \end{lstlisting}
     %\caption*{Travel time distributions on Brenta slope for different groups types.}
-    \caption{PIT internal fields}\label{lst:augustus.oldpit}
+    \caption{Original PIT internal fields}\label{lst:augustus.oldpit}
   \end{sublstlisting}
   \caption[CS and original PIT internal data structures fields]{Internal data structures fields for CS and PIT (simplified for clarity and brevity).}\label{lst:augustus.cs_oldpit}
 \end{figure}
@@ -447,11 +454,15 @@ struct pit_body_entry {
   \begin{sublstlisting}[t]{.5\linewidth}
     %\centering
   \begin{lstlisting}[language=c]
-struct orig_pit_ht_entry {
-  TODO
+struct fib_ht_entry {
+ bool busy;
+ uint32_t crc;
+ uint32_t array_index;
 };
-struct orig_pit_ring_entry {
-  TODO
+
+struct fib_array_entry {
+ char full_prefix[MAX_NAME_LEN];
+ uint8_t interface_id;
 };
     \end{lstlisting}
     %\caption*{Travel time distributions on Brenta slope for different groups types.}
@@ -459,18 +470,39 @@ struct orig_pit_ring_entry {
   \end{sublstlisting}
   \caption[Internal data structures fields for the improved PIT and the FIB]{Internal data structures fields for the improved PIT and the FIB (simplified for clarity and brevity).}\label{lst:augustus.newpit_fib}
 \end{figure}
-In order to overcome this issue, a new layout for the PIT was designed and implemented into the router: as depicted in figure~\ref{fig:augustus.newpit}, the new design relies solely on a hash table. Nevertheless, following the design principle that guided the original development, the first cache line of each bucket is used as an index for the ones to come: as detailed in listing~\ref{lst:augustus.newpit}, 
 
-Section~\ref{sec:test.pit} presents a comparison of packet loss when introducing the new PIT implementation.
+In order to overcome this issue, a new layout for the PIT was designed and implemented into the router: as depicted in figure~\ref{fig:augustus.newpit}, the new design relies solely on a hash table. Nevertheless, following the design principle that guided the original development, the first cache line of each bucket is used as an index for the ones to come: as detailed in listing~\ref{lst:augustus.newpit}, the bucket index contains the full 32 bit CRC hash, one bit indicating the slot's occupancy and the expiry timestamp. This way, the new structure keeps the property that, except for CRC collisions, a single cache miss is enough to determine whether a name is present as a valid entry in the PIT.
+
+Note that this new structure does not require a periodic purge operation: after loading the bucket index from main memory, the lookup procedure may scan the whole bucket index with no additional memory operations, treating expired entries as empty slots.
+
+Section~\ref{sec:test.pit} presents a comparison of the packet loss profile before and after introducing the new PIT implementation.
 
 \subsection{Forwarding Information Base}\label{sec:augustus.fib}
+The \gls{FIB} is the structure that, similarly to an IP routing table, holds next-hop information for all known name prefixes and is read-only during data plane routing. Comparing to IP routing tables, however, the \gls{FIB} needs to span a much larger addressing space.
+
+Also the basic part of the FIB structure is similar to the other data structures presented so far, as outlined in listing~\ref{lst:augustus.fib}: a stripped-down hash tables with pointers to an external array where the rest of the data is stored. Note that, this time, there is no need for any special management for the external array, as it will be filled sequentially and, as long as the data plane is concerned, entries are never updated nor deleted.
+
+Moreover, the complete implementation of the Augustus router employs an additional \textit{prefix bloom filter} for faster longest prefix lookups: as detailed in the presenting the Caesar router by Perino et al. \cite{caesar}, which provided a starting point for the fully-software reimplementation in Augustus. This structure relies on multiple bloom filters in order to determine (with the possibility of infrequent errors) the length of the prefix that should be looked up in the hash table.
+Nevertheless, because this technology was going through the patenting process, the implementation was not disclosed and we could not try it.
+
+Because we could not experiment with its full implementation, the \gls{FIB} was never put under stress throughout the experimental evaluation described in chapter\ref{chap:test}.
 
 \section{Multi-threading and NUMA awareness}\label{sec:augustus.numa}
-\todo[inline]{}
+The Augustus router targets modern servers that are most often equipped with multiple CPU sockets, each containing multiple processing cores. The management of processing cores is aided by the DPDK abstraction library, which natively supports multi-threading and requires to pin at initialization time each thread (called a logical core, or \mono{lcore} in DPDK) to a physical processor: this prevents unneeded context switches, better exploiting local caches.
+
+When multiple CPU sockets are installed on a server, it is common that separate memory banks are directly attached to each core, resulting in a \glsfirst{NUMA} architecture: each processing core has a most direct access to memory allocated on a bank on the same socket (called NUMA node), while access to ``remote'' memory is slower and may cause extra bus conflicts.\todo{numbers...}
+
+Moreover, in the context of high-speed packet routing, it is not feasible to manage shared data structures with semaphores, as they introduce an excessive overhead: whenever possible, thread-private data structures are used for read/write operations and shared structures are accessed read-only by all-but-one threads.
+
+In the Augustus router, both the \gls{PIT} and \gls{CS} structures are thread-private and are allocated on the same socket where the thread runs, while the \gls{FIB} is accessed read-only but is nevertheless replicated on each NUMA node, so that local memory access is always possible.
+However, separating the \gls{PIT} and \gls{CS} among the threads poses a strong correctness issue: what if a data packet with a name is handled by a different thread than its corresponding interest packet? If this happens, the thread handling the data packet will not find a matching pending interest and will drop the packet as spurious. The same goes for successive interests for the same name, that should result in either a CS hit or in a PIT aggregation.
+
+To overcome this issue, the hardware multiqueue system available in modern NICs is configured to inspect the incoming packets and read a header field holding a hash of the content name, so that it will dispatch packets referring to the same name consistently to the same hardware queue: each queue is polled by a single thread, guaranteeing that two packets with the same name will be delivered to the same thread.
 
 \section{Click module port}\label{sec:augustus.click}
-\todo[inline]{Design decisions for the click elements' API.
-Also include the sample click configuration file}
+\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.icn, caption=Sample Click configuration file using the API under development]{extra/icnrouter.click.txt}
+
+\todo[inline]{Quick description and design decisions for the click elements' API.}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
