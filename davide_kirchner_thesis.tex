@@ -18,7 +18,7 @@
 
 % added
 \usepackage{listings}
- \lstset{basicstyle=\footnotesize\ttfamily}
+ \lstset{basicstyle=\footnotesize\ttfamily,frame=lines}
  %\lstset{basicstyle=\footnotesize,keywordstyle=\color{blue},}
  %\lstset{basicstyle=\small\ttfamily,frame=single}
  \AtBeginDocument{\DeclareCaptionSubType{lstlisting}} % must stay between listings and subcaption
@@ -504,7 +504,7 @@ However, separating the \gls{PIT} and \gls{CS} among the threads poses a strong 
 To overcome this issue, the hardware multiqueue system available in modern NICs is configured to inspect the incoming packets and read a header field holding a hash of the content name, so that it will dispatch packets referring to the same name consistently to the same hardware queue: each queue is polled by a single thread, guaranteeing that two packets with the same name will be delivered to the same thread.
 
 \section{Click module port}\label{sec:augustus.click}
-\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.click, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
+\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
 
 One limitation posed by the choice of a implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The to main ways to overcome this limitation could be either running the software in a virtual machine, or integrating it as a plug-in into an existing routing framework. While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the original developers showed a strong interest in porting the router to the \emph{Click} modular router \cite{click}: this approach has the advantage that it builds upon a well established software framework, being able to leverage its most recent ecosystem, ranging from optimized versions (like FastClick \cite{fastclick} or a closed-source version developed at Bell Labs) to the integration with different drivers and even virtualization (through projects like ClickOS \cite{clickos} or NetVM \cite{netvm}).
 
@@ -661,35 +661,26 @@ The machines were running Linux 3.16. Following installation recommendation by t
 
 \chapter{Conclusions}
 
-This work approached the analysis of skiing traffic with the construction of a novel framework: it includes the needed geographical pre-processing tools and implements a set of ad-hoc algorithms for skiing traffic analysis.
-
-The implemented functions were run on the $2\,521\,385$ lift rides case study dataset: this way, a first system of statistical results was obtained.
-
-Throughout this process, it was important to focus on skiing groups: in fact, the implemented grouping algorithm highlights that nearly $90\%$ of descents are taken by skiers moving in groups.
-Furthermore, an application of traffic analysis to accidents epidemiology was investigated with the introduction of a traffic-based normalization of accidents data which led to the capability of constructing normalized risk analysis for parts of the case study area.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Future work}
 \label{sec:future-work}
 
- One limitation of the described algorithms is that they are not able to determine the distribution of skiers over the possible slopes that connect two nodes. A possible approach to overcome this limitation would be to distribute a mobile application for tracking skiers in their movements along slopes and lifts using the phone's GPS sensor; of course, the application would offer some services like displaying some basic analysis of the user's tracks so that more skiers would be interested in using it. This way, skiers could be tracked during their descents, and their paths could be the base for building or validating a model for the distributions of skiers in the whole ski area.
-
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%\chapter*{Lists}
+%\addcontentsline{toc}{chapter}{Lists}
+
 %\listoffigures
-{
-  %\let\cleardoublepage\clearpage  % this prevents 2 blank pages between listof*
-%  \listoftables
-
-%  \cleardoublepage
-%  \phantomsection
-%  \addcontentsline{toc}{chapter}{List of Algorithms}
-%  \listofalgorithms
-
-%  and, moreover: \lstlistoflistings
-}
+%\listoftables
+  %  \cleardoublepage
+  %\phantomsection
+%\addcontentsline{toc}{chapter}{List of Algorithms}
+%\listofalgorithms
+%\addcontentsline{toc}{chapter}{List of Listings}
+%\lstlistoflistings
 
 \bibliography{davide_kirchner_thesis}
 
