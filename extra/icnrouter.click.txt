@@ -5,12 +5,11 @@ fib :: ICNForwardingInformationBase()
 
 iface0in -> [0] in; iface1in -> [1] in;  // ...
 
-//          D,I-miss   I-miss  I-hit
-in -> cs [0] -> pit [0] -> fib -> out;
-//          I-hit
-      cs [1] -> out;
-//                     D-hit
-                pit [1] -> out;
+in -> cs [0] /*D,I-miss*/ -> pit;
+      cs [1] /* I-hit  */ -> out;
+
+pit [0] /*I-miss*/ -> fib -> out;
+pit [1] /*D-hit */ -> out;
 
 out [0] -> iface0out; out [1] -> iface1out;  // ...
 

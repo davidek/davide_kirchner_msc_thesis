@@ -34,7 +34,7 @@
 \usepackage{tikz}
 \renewcommand{\bottomfraction}{0.6}  %
 \renewcommand{\topfraction}{0.7}     %  Fit more figures in text pages
-\newcommand{\mono}[1]{\texttt{#1}}
+\newcommand{\mono}[1]{{\footnotesize \ttfamily #1}}
 
 % TODO notes
 \usepackage{xcolor}  % would anyway be imported by todonotes
@@ -232,7 +232,7 @@ hardware has made software more and more competitive even for performance-critic
 
 %The main advantage for choosing software over hardware is of course the greater flexibility: software allows for much quicker development-deployment cycles and simplifies the management enabling increasingly complex functions to be pushed towards the core of the networks.
 While this transition might not be worth for IP backbone routing, where the scale fully justifies the development and production costs of dedicated hardware reaching the limits of routing capabilities, for applications ranging from firewalls to experimental routing protocols and even intra-datacenter routing, it's reasonable to trade-off some performance for increased flexibility and decreased development costs.
-Back in 2000, these motivations brought Kohler et al. \cite{click} to develop the \emph{Click Modular Router}, a complete and extensible framework for setting up complex network functionalities, which keeps receiving a lot of attention from the \gls{SDN} research community, as detailed hereafter. Click allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{elements}, that process each packet in cascade (one example is provided in listing~\ref{lst:augustus.clicl}).
+Back in 2000, these motivations brought Kohler et al. \cite{click} to develop the \emph{Click Modular Router}, a complete and extensible framework for setting up complex network functionalities, which keeps receiving a lot of attention from the \gls{SDN} research community, as detailed hereafter. Click allows a middlebox application to be described declaratively as a directed graph of simple functionalities, \emph{elements}, that process each packet in cascade (one example is provided in listing~\ref{lst:augustus.click}).
 
 \paragraph{High-speed packet I/O} Together with new hardware, one key improvement that has enabled the recent performance boost of software-based routing was the introduction of high-speed packet I/O libraries, all of which provide a way to bypass the OS basic network stack, which is flow-oriented and might involve a packet being copied a number of times in its way from the NIC card to the userspace memory. %in order to optimize for packet-oriented processing.
 
@@ -270,7 +270,7 @@ Different architecture choices have lead Hwang et al. to the development of NetV
 \paragraph{} Despite the throughput numbers hinted above do not allow to compare performance across different studies (mainly due to the broad variety of hardware configurations used), these first experiences in software defined networking have proven that this technology could be already capable of managing an important part of our communication needs with the flexibility of software development. For this reason, it has the possibility to play a major role in the building of future internet architectures and network services, allowing new paradigms and protocols to be built and deployed in a much shorter time scale than what it took to build the current Internet protocol stack, starting with the flexibility to co-exist with traditional networking.
 
 \section{Information-centric networking}
-One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly be used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
+One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly being used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
 and requested by clients B and C will have to travel twice through routers R1 and R2. Moreover, before being able to request the resource to host A, clients will need to query a name resolution service and obtain its address.
 
 In contrast, the \glsfirst{ICN} paradigm aims at pushing the management of named resources into the network: in an ICN network, clients directly ask their router for a resource with a given name. The network will then take care of retrieving the requested resource regardless of where it's stored, and can exploit local cache at intermediate routers.
@@ -286,7 +286,7 @@ A key aspect to enable high-speed name-based routing is thus to optimize the dat
 
 So et al. \cite{ndn_fast_dosresistant} proposed an algorithm to perform the longest-prefix match in the \gls{FIB} using a hash-table guaranteeing bounded number of reads in the worst-case, regardless of the number of components in the requested resource identifier. Their work also focuses on the optimization of the hash tables and the hashing function and on the possibility to partition the \gls{FIB} table among multiple processing cores.
 
-In another work, Perino et al. \cite{caesar} have proposed Caesar, a router implementing a 2-stage longest-prefix match (LPM) algorithm based on a so-called prefix bloom filter: multiple bloom filters are queried to find (with the possibility of errors towards longer prefixes) the length of the prefix stored in the \gls{FIB} (i.e. the routing table), and a successive single lookup in a hash table finds the entry itself: thus, the required memory access operations for the LPM to two in most cases. Caesar also supports distributing the \gls{FIB} among multiple network processing units (NPUs) and GPU computation offloading. In this case, the target architecture is more powerful than the one this work focuses on.
+In another work, Perino et al. \cite{caesar} have proposed Caesar, a router implementing a 2-stage longest-prefix match (LPM) algorithm based on a so-called prefix bloom filter: multiple bloom filters are queried to find (with the possibility of errors towards longer prefixes) the length of the prefix stored in the \gls{FIB} (i.e. the routing table), and a successive single lookup in a hash table finds the entry itself: thus, the required memory access operations for the LPM to two in most cases. Caesar also supports distributing the \gls{FIB} among multiple network processing units (NPUs) and GPU computation offloading, targeting an architecture which is more powerful than the one this work focuses on.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -301,7 +301,7 @@ it is written in C and based on DPDK \cite{dpdk} for managing packet I/O directl
 
 Note that, at the moment, the router does not implement any protocol for the dissemination of routing information (control plane): instead, it implements the data plane packet processing and relies on routes being pre-loaded on the router. The reason is that, at this stage, the aim is to assess the performance of data plane routing in order to determine what could be the scale of a deployment using this technology.
 
-This chapter starts providing an overview of the CCN routing protocol (section~\ref{sec:augustus.ccn}) and continues detailing the design choices and some implementation details for the involved data structures (sections~\ref{sec:augustus.cs} through \ref{sec:augustus.fib});
+This chapter starts providing an overview of the CCN routing protocol (section~\ref{sec:augustus.ccn}) and continues detailing the design choices and some implementation details for the involved data structures (sections\ref{sec:augustus.structures});
 in particular, the \gls{PIT} implementation was found to have strong limitations and a new approach is proposed in section~\ref{sec:augustus.pit.new}.
 Section~\ref{sec:augustus.numa} details the strategies adopted to better exploit multiprocessor architectures.
 Finally, section~\ref{sec:augustus.click} presents a possible structure for a set of \emph{Click} elements implementing the same functionality. The full implementation and performance comparison is, however, left for a future work.
@@ -310,7 +310,7 @@ Finally, section~\ref{sec:augustus.click} presents a possible structure for a se
 \begin{algorithm}[htb]
 %\begin{algorithm}[H]
   \DontPrintSemicolon
-  \KwIn{$p$: ICN packet}
+  \KwIn{$p$: CCN packet}
   \If{p.is\_interest()}{
     \input{extra/interest_routing_algo.tex}
   }
@@ -321,7 +321,7 @@ Finally, section~\ref{sec:augustus.click} presents a possible structure for a se
   \label{algo:routing}
 \end{algorithm}
 
-The \gls{CCN} approach, first introduced by Jacobson et al. \cite{ccn} and adopted by the Named Data Networking initiative\footnote{\url{http://named-data.net/}}, relies on hierarchical names (e.g. \mono{/it/unitn/about/intro.mp4}) to address resources that fit a single packet (thus requiring to divide content into named chunks if it doesn't fit).
+The \gls{CCN} approach, first introduced by Jacobson et al. \cite{ccn} and adopted by the Named Data Networking initiative\footnote{\url{http://named-data.net}}, relies on hierarchical names (e.g. \mono{/it/unitn/about/intro.mp4}) to address resources that fit a single packet (thus requiring to divide content into named chunks if it doesn't fit).
 
 The content delivery is based on two packet types: \emph{interest} packets are sent by a client requesting for a resource with a given name, while \emph{data} packets carry the resource itself. Both packets hold the full name of the resource, together with other information aiding the routing procedure.
 The Augustus router conforms to the specifications of an internet draft authored by the same research group at Bell labs \cite{icn-packet}.
@@ -494,21 +494,27 @@ Because we could not experiment with its full implementation, the \gls{FIB} was 
 \section{Multi-threading and NUMA awareness}\label{sec:augustus.numa}
 The Augustus router targets modern servers that are most often equipped with multiple CPU sockets, each containing multiple processing cores. The management of processing cores is aided by the DPDK abstraction library, which natively supports multi-threading and requires to pin at initialization time each thread (called a logical core, or \mono{lcore} in DPDK) to a physical processor: this prevents unneeded context switches, better exploiting local caches.
 
-When multiple CPU sockets are installed on a server, it is common that separate memory banks are directly attached to each core, resulting in a \glsfirst{NUMA} architecture: each processing core has a most direct access to memory allocated on a bank on the same socket (called NUMA node), while access to ``remote'' memory is slower and may cause extra bus conflicts.\todo{numbers...}
+When multiple CPU sockets are installed on a server, it is common that separate memory banks are directly attached to each one, resulting in a \glsfirst{NUMA} architecture: each processing core has a direct access to memory allocated on a bank on the same socket (called NUMA node), while access to ``remote'' memory is slower and may cause extra bus conflicts.\todo{numbers...}
 
 Moreover, in the context of high-speed packet routing, it is not feasible to manage shared data structures with semaphores, as they introduce an excessive overhead: whenever possible, thread-private data structures are used for read/write operations and shared structures are accessed read-only by all-but-one threads.
 
-In the Augustus router, both the \gls{PIT} and \gls{CS} structures are thread-private and are allocated on the same socket where the thread runs, while the \gls{FIB} is accessed read-only but is nevertheless replicated on each NUMA node, so that local memory access is always possible.
+In the Augustus router, both the \gls{PIT} and \gls{CS} structures are thread-private and are allocated on the same socket where the thread runs; the \gls{FIB}, instead, is accessed read-only but is nevertheless replicated on each NUMA node, so that local memory access is always possible.
 However, separating the \gls{PIT} and \gls{CS} among the threads poses a strong correctness issue: what if a data packet with a name is handled by a different thread than its corresponding interest packet? If this happens, the thread handling the data packet will not find a matching pending interest and will drop the packet as spurious. The same goes for successive interests for the same name, that should result in either a CS hit or in a PIT aggregation.
 
 To overcome this issue, the hardware multiqueue system available in modern NICs is configured to inspect the incoming packets and read a header field holding a hash of the content name, so that it will dispatch packets referring to the same name consistently to the same hardware queue: each queue is polled by a single thread, guaranteeing that two packets with the same name will be delivered to the same thread.
 
 \section{Click module port}\label{sec:augustus.click}
-\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.icn, caption=Sample Click configuration file using the API under development]{extra/icnrouter.click.txt}
+\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.click, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
 
-One limitation posed by the choice of a implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The to main ways to overcome this limitation could be either running the software in a virtual machine, or integrate it as a plug-in into an existing routing framework. While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the second approach   the original developers showed a strong interest in porting the router to the \emph{Click} modular router: 
-Alongside with the evaluation of the performance of the standalone router implementation described so far, 
-\todo[inline]{Quick description and design decisions for the click elements' API.}
+One limitation posed by the choice of a implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The to main ways to overcome this limitation could be either running the software in a virtual machine, or integrating it as a plug-in into an existing routing framework. While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the original developers showed a strong interest in porting the router to the \emph{Click} modular router \cite{click}: this approach has the advantage that it builds upon a well established software framework, being able to leverage its most recent ecosystem, ranging from optimized versions (like FastClick \cite{fastclick} or a closed-source version developed at Bell Labs) to the integration with different drivers and even virtualization (through projects like ClickOS \cite{clickos} or NetVM \cite{netvm}).
+
+For these reasons, alongside with the evaluation of the performance of the standalone router implementation described so far, I started exploring the possible appearance of the API exposed be a Click element library for ICN.
+
+Before detailing the API, it is worth to quickly hint at Click's organization and configuration syntax. A Click router is defined by its configuration file, which represents a directed graph of \emph{elements}: packets travel their way along the graph edges, starting from an input element (which either received from the underlying network driver or generates new packets), until an element either drops it or sends it back to a NIC for forwarding. Each element is instantiated by referencing its full name and possibly specifying its parameters: instantiated elements can be given a name with the double colon syntax \mono{::}. Elements can have any number of input and output numbered \emph{ports}, noted with square brackets at the left (inputs) or right (outputs) of the corresponding element, and ports are connected with each other with left-to-right arrows \mono{->}.
+
+Listing~\ref{lst:augustus.click} presents a sample (excerpt of a) Click configuration file which uses the proposed API: the single data structures are exposed as Click elements, each accepting a single input port for both interest and data packets. In this context, some care was needed in order to manage output links: note that the routing procedure is based on the notion of interfaces with point-to-point links, and note that throughout the procedure queries on all three data structures may result in a packet being emitted for sending. To simplify this flow, the extra elements \mono{ICNInputMux} and \mono{ICNOutputDemux} were introduced: the input element takes an arbitrary number of inputs and annotates each packet with the input port, emitting all packets on its single output, so that the core elements may inspect this annotation (both the CS and PIT need this). Core elements wishing to send a packet out will emit it on the proper port (port \mono{[1]} for CS and PIT and the only output port for the FIB) after tagging it with the desired output interface (or interfaces, in case of PIT aggregation): the output element will take care of reading the annotation and sending the packet to its corresponding output port (or ports), which must be wired to the output elements symmetrically with respect to inputs.
+
+The full development of the Click integration and a comparison of its performance against the standalone version are left as a future work.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
