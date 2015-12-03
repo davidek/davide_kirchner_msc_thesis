@@ -291,11 +291,21 @@ This allows to picture the dissemination of new networking paradigms made faster
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \chapter{Introduction}
+\label{chap:intro}
 
-\todo[inline]{General intro}
+Today's web is increasingly being used for content distribution, for applications ranging from rich web pages   to video streaming, but in this context the host-based approach to networking that gave birth to IP often leads to an inefficient utilization of the network resources: in the research for new paradigms to power the future   internet, the \gls{ICN} approach moves awareness of the content to the core of the   network, giving up the notion of host-to-host link and replacing it with a directory of named resources.
+
+In the meanwhile, new general purpose high-performance hardware is opening new possibilities for software networking applications to overcome custom hardware solutions even for performance-sensitive functionalities, enabling a previously unseen flexibility in the implementation of network functionalities.
+
+This work is placed at the intersection of the two research fields, studying the data plane performance of a software implementation for an ICN router.
+
+This chapter introduces the research fields of \gls{SDN} (section~\ref{sec:intro.sdn}) and \gls{ICN} (section~\ref{sec:intro.icn}) providing an overview of the most recent works in both areas.
+Afterwards, chapter~\ref{chap:augustus} describes the routing protocol implemented by the router and gives details about the design and implementation of the required data structures.
+Chapter~\ref{chap:test}, presents the measurements setup and details its results, composing the core of this work.
+Finally, chapter~\ref{chap:conclusions} summarizes the main achievements and results of my work, concluding this document.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Software defined networking}
+\section{Software defined networking}\label{sec:intro.sdn}
 The growing availability of high-performance commodity off-the-shelf %\gls{COTS}
 hardware has made software more and more competitive even for performance-critical functions that have been traditionally implemented with dedicated hardware: in the networking domain, affordable 10 Gbps network cards together with multi-core CPUs and GPUs were the key enablers for this shift.
 
@@ -347,7 +357,7 @@ Different architecture choices have lead Hwang et al. to the development of NetV
 \paragraph{} Despite the throughput numbers hinted above do not allow to compare performance across different studies (mainly due to the broad variety of hardware configurations used), these first experiences in software defined networking have proven that this technology could be already capable of managing an important part of our communication needs with the flexibility of software development. For this reason, it has the possibility to play a major role in the building of future internet architectures and network services, allowing new paradigms and protocols to be built and deployed in a much shorter time scale than what it took to build the current Internet protocol stack, starting with the flexibility to co-exist with traditional networking.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Information-centric networking}
+\section{Information-centric networking}\label{sec:intro.icn}
 One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly being used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
 and requested by clients B and C will have to travel twice through routers R1 and R2. Moreover, before being able to request the resource to host A, clients will need to query a name resolution service and obtain its address.
 
@@ -767,7 +777,7 @@ Figure~\ref{fig:test.multicore.incr_len} concludes this measurements showing the
 
 \chapter{Conclusions}
 \label{chap:conclusions}
-
+\todo[inline]{}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future work}\label{sec:future-work}
 
