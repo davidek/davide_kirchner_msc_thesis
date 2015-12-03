@@ -42,3 +42,7 @@ CRC
 offline
 online
 datacenter
+L2
+SDU
+PDU
+Poisson

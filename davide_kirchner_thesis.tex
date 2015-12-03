@@ -91,6 +91,7 @@
 
 \begin{document}
 
+\begin{comment}
 \begin{titlepage}
   \begin{center}
     \begin{Large}University of Trento\\\end{Large}
@@ -140,6 +141,50 @@
     Academic year 2014-2015
   \end{center}
 \end{titlepage}
+\end{comment}
+
+%\begin{comment}
+\begin{titlepage}
+%  \pagestyle{plain}
+%  \thispagestyle{empty}
+
+	\begin{center}
+		\begin{figure}[h!]
+			%\centerline{\psfig{file=logo_unitn_black_center.eps,width=0.6\textwidth}}
+      \centerline{\includegraphics[width=0.6\textwidth]{img/logo_unitn_black_center.pdf}}
+		\end{figure}
+
+		%\vspace{2 cm} 
+
+		\LARGE{Department of Computer Science and Engineering\\}
+
+		\vspace{1 cm} 
+		\Large{Joint double degree\\
+      Graduate Programme in Computer Science and Engineering\\
+      Master Degree Course in Computer Science\\
+    }
+
+		\vspace{2 cm} 
+		\Large\textsc{Final thesis\\} 
+		\vspace{1 cm} 
+		\LARGE{Performance evaluation and design of a software Information Centric Networking router\\}
+		%\Large{\it{Sottotitolo (alcune volte lungo - opzionale)}}
+
+
+		\vspace{2 cm} 
+		\begin{tabular*}{\textwidth}{ l @{\extracolsep{\fill}} l }
+        \Large{Supervisors} & \Large{Graduant}\\
+        \Large{prof. Renato lo Cigno} & \Large{Davide Kirchner}\\[-.4em]
+        \Large{prof. Luca Valcarenghi} & \\
+		\end{tabular*}
+
+		\vspace{2 cm} 
+
+		\Large{Academic year 2015/2016}
+		
+	\end{center}
+\end{titlepage}
+%\end{comment}
 
 \tableofcontents
 
@@ -342,7 +387,7 @@ Moreover, all data structures are allocated at bootstrap time, so that no expens
 
 It is worth noting that the \gls{PIT} and the \gls{CS} structures need to be updated online during router operations: by contrast, the \gls{FIB} can be operated read-only in the data plane, similarly to classical IP routing tables: updates can be computed asynchronously in the control plane and hot-swapped with the previous version, in the assumption that the difference between subsequent versions will be small and thus only a very small fraction of packets will be mis-routed during the update.
 
-The remaining of this section provides some implementation details for the three data structures involved in the routing procedure.
+The remainder of this section provides some implementation details for the three data structures involved in the routing procedure.
 
 \subsection{Content Store}\label{sec:augustus.cs}
 \begin{figure}[htb]
@@ -524,6 +569,8 @@ The full development of the Click integration and a comparison of its performanc
 \chapter{Performance evaluation}
 \label{chap:test}
 
+This chapter presents the results of the performance measurements for the Augustus router: section~\ref{sec:test.env} presents the testbed setup, 
+
 \section{Testing environment}\label{sec:test.env}
 The experimental setup was composed of two twin machines, each equipped with two 10 Gbps Ethernet ports:
 table \ref{tab:test.hw} summarises their hardware components.
@@ -551,28 +598,134 @@ The machines were running Linux 3.16. Following installation recommendation by t
 \footnote{\url{https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 %\footnote{\url{https://web.archive.org/web/20150906011201/https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 
-\todo[inline]{Picture of the servers' back panel and network connector}
+\begin{figure}[htb]
+  \begin{center}
+    \frame{\includegraphics[width=.6\textwidth]{img/servers_back.jpg}}
+    \caption[Back panel of the test servers]{Back panel of the test servers, with the SFP+ network ports wired with each other.}
+    \label{fig:test.servers_backpane}
+  \end{center}
+\end{figure}
 
+\section{Throughput definition and 802.3 overhead}\label{sec:test.overhead}
 
-\section{Accounting for Ethernet overhead}\label{sec:test.overhead}
-\todo[inline]{just 1 or 2 paragraph describing the dashed line in the plots}
+Throughout this chapter, throughput is measured in two main ways: as packet throughput or as bit throughput.
+The \emph{packet throughput} is the most straightforward measurement of the routing capabilities of the tested system, and is defined as the number of data packets routed in a given time interval; in most experiments, this means that the actual number of routed packets is at least double, if counting also interest packets.
+Defining the \emph{bit throughput} requires the arbitrary choice of the layer where to count bits: here I will use the 802.3 \gls{SDU} layer, defining the bit throughput as the number of L2-payload bits belonging to data packets forwarded per time unit.
+
+This definition has the advantage of being closer to the throughput that would be measured at the application layer. However, this also means that the resulting bit throughput is not directly comparable with the one measured at the physical layer, as reported on NIC data sheets and on physical networking standards.
+Indeed, unless the payload is so small that extra padding is required, the transmission of a 802.3 packet adds to the payload at least the equivalent of 38 bytes (octets) on wire \cite{ethernet}:
+\begin{itemize}[noitemsep,nolistsep]
+\item 7 octets preamble,
+\item 1 octet Start of Frame Delimiter,
+\item 14 octets header, including the addresses and the type/length field but excluding optional fields like the VLAN tag,
+\item 4 octets Frame Check Sequence,
+\item Inter-Packet Gap, equivalent to 12 octets.
+\end{itemize}
+For packets with 46 bytes of L2 payload (which is the minimum size that does not yield any padding in 802.3),the maximum achievable performance over a 10 Gbps link is thus a mere $5.4$ Gbps. Of course, the overhead tends to get smaller for bigger packets and almost negligible for large jumbo frames.
+
+For this reason, throughout the rest of this chapter all the plots using bit throughput are compared against the maximum throughput achievable at the given packet size.
+
+Every data point presented in the next section was obtained from the router performance at steady state, taking periodic samples and averaging the measure over a time span that ranges from $20$ to $100$ seconds, depending on the variability that was found in the preliminary runs.
 
 \section{Traffic generator}\label{sec:test.traffgen}
-\todo[inline]{Roughly describe the traffic generator/echo server}
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{img/traffgen_increasing_len.pdf}
+    \caption[Performance of the traffic generator alone]{Performance of the traffic generator alone. Note that the measurements here were extremely stable, with 3 to 5 significant digits.}
+    \label{fig:test.traffgen-perf}
+  \end{center}
+\end{figure}
+\begin{figure}[htb]
+  \begin{center}
+    \frame{\includegraphics[width=.5\textwidth,draft]{img/test_setup.pdf}}
+    \caption{Traffic flow for the router evaluation experiments.}
+    \label{fig:test.flow}
+  \end{center}
+\end{figure}
+All the measurements described hereafter have been taken with the aid of a custom traffic generator software running on the other server. The traffic generator, initially developed at Alcatel-Lucent Bell Labs together with the router, is also based on DPDK and shares the packet inspection utilities with the main router. While its core was left mostly unchanged, during the measurement campaign it was extended to support all the scenarios described in the next sections.
+
+The traffic generator implements two main functionalities: the \emph{interest generator} initialises a pool of interest packets and sends them at a chosen pace towards one output port; the \emph{echo server}, instead, listens for incoming packets (on either port) and replies to each interest packet with a data packet containing garbage data associated to the requested resource name. The echo server also recognises incoming data packets and keeps records of the number of packets and bytes it receives: these counters constitute the base for the throughput measurements.
+
+Some of the additions developed during the thesis work include support for:
+\begin{itemize}[noitemsep,nolistsep]
+  \item extended run-time configuration (most parameters were only modifiable at compile-time, which is not practical for running iteratively while tuning a parameter);
+  \item per-port throughput counters;
+  \item periodic and asynchronous counters printouts;
+  \item on-NIC checksum computation;
+  \item generation of interest packets as a Poisson process.
+\end{itemize}
 
 \subsection{Generation performance}
-\todo[inline]{Present the results for the cases with the generator loop connection}
+
+Before starting to measure the router performance, it was useful to test the generator by itself in order to have a baseline measure and be sure it was able to fully load the router.
+To achieve this, two ports on the same servers were short-circuited together, with the generator running on the machine and sending interest packets on one port: the packets would then be received by the echo server running on the same machine and data would be sent in the backward direction. Finally, the (same) echo server could count the incoming data packets and drop them.
+
+The measurements were taken with one thread running the interest generator and one thread running the echo server, and are shown in figure~\ref{fig:test.traffgen-perf}: as expectable, for small packets (up to about 120 bytes) the overall performance is capped by the packet throughput, while for bigger packets the bit throughput limit introduced in section~\ref{sec:test.overhead} is reached.
+Because, as highlighted in the coming sections, this configuration proved to generate enough traffic to load (and overload) the router, the performance using multiple cores were not explored.
 
 \section{Single-threaded routing}
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{img/augustus_increasing_len_0x1.pdf}
+    \caption[Single-threaded routing performance at varying data packet size]{Routing performance when running the router on a single thread, at varying data packet size.}
+    \label{fig:test.incr_len_single}
+  \end{center}
+\end{figure}
+
+Figure\ref{fig:test.incr_len_single}
+\todo[inline]{}
 
 \section{Multi-threaded routing}\label{sec:test.multicore}
 
 \subsection{CPUs and memory layout}\label{sec:test.multicore.layout}
-\todo[inline]{Describe and sketch the layout.}
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=.7\textwidth]{img/cpus_horiz.pdf}
+    \caption[Processors and caches layout on the test servers]{Representation of the processors and caches layout on the test servers.}
+    \label{fig:test.multicore.cpus}
+  \end{center}
+\end{figure}
+
+\todo[inline]{}
 
 \subsection{Performance by core mapping}\label{sec:test.multicore.performance}
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=.75\textwidth]{img/augustus_multithread.pdf}
+    \caption[Routing performance with different threads count and core pinning]{Routing performance with different threads count and core pinning configurations. The core ID numbers refer to the ones in figure \ref{fig:test.multicore.cpus}. These measurements were taken with packets of $94$ bytes.}
+    \label{fig:test.multicore.coremap}
+  \end{center}
+\end{figure}
+
+\todo[inline]{}
+
+\begin{figure}[htb]
+  \begin{center}
+    \includegraphics[width=1.0\textwidth]{img/augustus_increasing_len_0xF.pdf}
+    \caption[Routing performance ]{Routing performance at varying data packet size for the best configuration.}
+    \label{fig:test.multicore.incr_len}
+  \end{center}
+\end{figure}
+
+\todo[inline]{}
 
 \section{Evaluation of the new PIT design}\label{sec:test.pit}
+
+\todo[inline]{}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\chapter{Conclusions}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Future work}
+\label{sec:future-work}
+
+
 
 %  SIMPLE PICTURE
 %\begin{figure}[htb]
@@ -657,15 +810,6 @@ The machines were running Linux 3.16. Following installation recommendation by t
   \end{center}
 \end{figure}
 \end{comment}
-
-
-\chapter{Conclusions}
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Future work}
-\label{sec:future-work}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
