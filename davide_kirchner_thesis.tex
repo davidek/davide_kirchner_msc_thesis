@@ -33,7 +33,7 @@
  \setlist[inlineenum]{label=\textit{\roman*})}
 \usepackage{tikz}
 \renewcommand{\bottomfraction}{0.6}  %
-\renewcommand{\topfraction}{0.7}     %  Fit more figures in text pages
+\renewcommand{\topfraction}{0.75}    %  Fit more figures in text pages
 \newcommand{\mono}[1]{{\footnotesize \ttfamily #1}}
 
 % TODO notes
@@ -145,44 +145,62 @@
 
 %\begin{comment}
 \begin{titlepage}
-%  \pagestyle{plain}
-%  \thispagestyle{empty}
+  %  \pagestyle{plain}
+  %  \thispagestyle{empty}
 
-	\begin{center}
-		\begin{figure}[h!]
-			%\centerline{\psfig{file=logo_unitn_black_center.eps,width=0.6\textwidth}}
-      \centerline{\includegraphics[width=0.6\textwidth]{img/logo_unitn_black_center.pdf}}
-		\end{figure}
+  \begin{center}
+    %\begin{figure}[h!]
+    %	%\centerline{\psfig{file=logo_unitn_black_center.eps,width=0.6\textwidth}}
+    %  \centerline{\includegraphics[width=0.6\textwidth]{img/logo_unitn_black_center.pdf}}
+    %\end{figure}
+    \noindent\begin{minipage}{.65\textwidth} 
+      \begin{minipage}{0.5\textwidth}
+        \centering
+        \includegraphics[height=3cm]{img/logo_unitn_blu.jpg}  % img/unitn_logo.pdf
+      \end{minipage}%
+      \begin{minipage}{0.5\textwidth}
+        \centering 
+        \includegraphics[height=3cm]{img/logo_santanna.jpg}
+      \end{minipage} 
+    \end{minipage}
+    \todo{any strong opinion on colours vs B/W?}
+    \vspace{1cm}
 
-		%\vspace{2 cm} 
+    \LARGE{University of Trento}\\
+    \Large{Department of Computer Science and Engineering}
 
-		\LARGE{Department of Computer Science and Engineering\\}
+    \vspace{.5cm}
 
-		\vspace{1 cm} 
-		\Large{Joint double degree\\
-      Graduate Programme in Computer Science and Engineering\\
-      Master Degree Course in Computer Science\\
+    \LARGE{Scuola Superiore Sant'Anna, Pisa}\\
+    \Large{Institute for Information, Communication and Perception Technology}
+
+    \vspace{1 cm} 
+    \Large{Graduate Programme\\
+      in Computer Science and Engineering
+      %Master Degree Course in Computer Science
     }
 
-		\vspace{2 cm} 
-		\Large\textsc{Final thesis\\} 
-		\vspace{1 cm} 
-		\LARGE{Performance evaluation and design of a software Information Centric Networking router\\}
-		%\Large{\it{Sottotitolo (alcune volte lungo - opzionale)}}
+    \vspace{1 cm} 
+    \Large\textsc{Final thesis} 
+
+    \vspace{.5cm}
+
+    \huge{Performance evaluation and design of a \\ software Information Centric Networking \\ router}
+    %\Large{\it{Sottotitolo (alcune volte lungo - opzionale)}}
 
 
-		\vspace{2 cm} 
-		\begin{tabular*}{\textwidth}{ l @{\extracolsep{\fill}} l }
-        \Large{Supervisors} & \Large{Graduant}\\
-        \Large{prof. Renato lo Cigno} & \Large{Davide Kirchner}\\[-.4em]
-        \Large{prof. Luca Valcarenghi} & \\
-		\end{tabular*}
+    \vspace{1.5cm} 
+    \begin{tabular*}{\textwidth}{ l @{\extracolsep{\fill}} l }
+      \Large{Supervisors:} & \Large{Graduant:}\\
+      \Large{prof. Renato lo Cigno} & \Large{Davide Kirchner}\\[-.4em]
+      \Large{prof. Luca Valcarenghi} & \\
+    \end{tabular*}
 
-		\vspace{2 cm} 
+    \vspace{1.5cm} 
 
-		\Large{Academic year 2015/2016}
-		
-	\end{center}
+    \Large{Academic year 2015/2016}
+
+  \end{center}
 \end{titlepage}
 %\end{comment}
 
@@ -191,17 +209,16 @@
 %\printglossaries
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{comment}
 \begin{acknowledgements}
 
-This work was developed in the context of a stage and junior programmer job position at \emph{Predictive Models for Biomedicine and Environment} (MPBA) unit at \emph{Fondazione Bruno Kessler} research center.
+  This work was developed at the Advanced Networking Systems lab under the direct supervision of professor Renato lo Cigno, who I would like to especially thank for his invaluable guidance and his dedication. This work was possible thanks to the partnership with Alcatel-Lucent Bell Labs, where the software router that is the subject of this work was developed. The experimental environment I worked on was available thanks to the ??\todo{EIT grant xy?}.
+I would also like to express my gratitude to professor Luca Valcarenghi at Scuola Sant'Anna for his for his availability and his enthusiasm.
 
-I would like to express my gratitude to Cesare Furlanello, head of unit at MPBA, and to Alberto Montresor, associate professor at the University of Trento, for supervising my  work.
+Finally, I'd like to thank all the guys at the ANS lab and Bell Labs I interacted with, my (broadly-defined) family and especially my fionc\'ee Anna for their support.
 
 %This work was possible thanks to the effort of Cesare Furlanello and all the colleagues at \emph{Predictive Models for Biomedicine and Environment} (MPBA) unit at \emph{Fondazione Bruno Kessler} who contributed to the results I have achieved.
 %I would also like to thank professor Alberto Montresor for supervising me in this work.
 \end{acknowledgements}
-\end{comment}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -211,6 +228,20 @@ I would like to express my gratitude to Cesare Furlanello, head of unit at MPBA,
 \chapter*{Summary}
 This is not a sumamry, but just a small attempt to see the speed of collaborative work via overleaf, and test its editor that I never used before. 
 \addcontentsline{toc}{chapter}{Summary}
+
+Today's web is increasingly being used for content distribution, for applications ranging from rich web pages to video streaming, but in this context the host-based approach to networking that gave birth to IP often leads to an inefficient utilization of the network resources: in the research for new paradigms to power the future internet, the information-centric networking (ICN) approach moves awareness of the content to the core of the network, giving up the notion of host-to-host link and replacing it with a directory of named resources.
+In the meanwhile, new general purpose high-performance hardware is opening new possibilities for software networking applications to overcome custom hardware solutions even for performance-sensitive functionalities, enabling a previously unseen flexibility in the implementation of network functionalities.
+Combining the ICN approach with software defined networking results in a powerful and flexible approach to networking, which has the potential for gradually entering, alongside existing technology, towards the core of today's networks.
+
+This work presents an evaluation of the performance of \emph{Augustus}, a software ICN router developed at Alcatel-Lucent Bell Labs. Among different flavours of ICN, Augustus implements the content-centric networking (CCN) routing protocol: data transfer is initiated by a client who wants to retrieved a resource, identified by a variable-length, hierarchical name (resembling a full file name in a rooted file system): the network has the freedom to retrieve the resource from any host holding a (signed) copy of the data, allowing to optimize for efficiency, responsiveness or throughput. CCN routing is based on data structures that must be updated and queried during the routing procedure: in the Augustus router, the structures are implemented with the design goal of minimizing the number of RAM accesses during operation, which is achieved by carefully placing information in each cache line. In particular, the work on performance evaluation highlighted a limitation in the design of the pending interest table (PIT), one such data structure, so a new layout is proposed following the same design principles: the described new structure was also implemented into the router itself, and the benefits of the improved design were quantified with an improvement of TODO \todo{finalize after last section} orders of magnitude in the loss counts when working close to the maximum load achievable by the router.
+
+The core part of this work consists of the performance evaluation of the router, which was conducted using two servers with two 10 Gbps Ethernet ports each, one running the tester router and the other generating traffic and collecting performance measurements. When running single-threaded, Augustus routed $1.7$ millions of data packets (and as many request packets -- ``interests'' in CCN jargon) per second, saturating the 10 Gbps link for packets of 700 Bytes or longer. Some interesting insights were obtained running the router in multiple threads and varying the mapping of threads on physical processing cores: % as outlined in figure~\ref{fig:abstract},
+the throughput profile, which at first appeared hard to explain, can easily be understood by comparing it to the physical layout of the processing cores and cache layers, highlighting that memory access consists of the main bottleneck for this type of load.
+With the best core mapping found, the router managed to forward $5.4$ millions of data packets per second, thus saturating the link with packets of just 200 Bytes.
+
+Overall, these results are promising, showing that the technology for software defined networking is competitive and that high-speed routing is feasible even for the CCN protocol, which poses a heavy load on the router requiring on-line management of big data structures.
+This allows to picture the dissemination of new networking paradigms made faster, cheaper and easier to coexist with other solutions thanks to the flexibility introduced by software networking functions.
+
 
 %\vspace{-.7cm}  % prevent abstract from using 3 pages. Actually ugly
 
@@ -264,6 +295,7 @@ This is not a sumamry, but just a small attempt to see the speed of collaborativ
 
 \todo[inline]{General intro}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Software defined networking}
 The growing availability of high-performance commodity off-the-shelf %\gls{COTS}
 hardware has made software more and more competitive even for performance-critical functions that have been traditionally implemented with dedicated hardware: in the networking domain, affordable 10 Gbps network cards together with multi-core CPUs and GPUs were the key enablers for this shift.
@@ -315,6 +347,7 @@ Different architecture choices have lead Hwang et al. to the development of NetV
 
 \paragraph{} Despite the throughput numbers hinted above do not allow to compare performance across different studies (mainly due to the broad variety of hardware configurations used), these first experiences in software defined networking have proven that this technology could be already capable of managing an important part of our communication needs with the flexibility of software development. For this reason, it has the possibility to play a major role in the building of future internet architectures and network services, allowing new paradigms and protocols to be built and deployed in a much shorter time scale than what it took to build the current Internet protocol stack, starting with the flexibility to co-exist with traditional networking.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Information-centric networking}
 One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly being used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
 and requested by clients B and C will have to travel twice through routers R1 and R2. Moreover, before being able to request the resource to host A, clients will need to query a name resolution service and obtain its address.
@@ -352,8 +385,9 @@ in particular, the \gls{PIT} implementation was found to have strong limitations
 Section~\ref{sec:augustus.numa} details the strategies adopted to better exploit multiprocessor architectures.
 Finally, section~\ref{sec:augustus.click} presents a possible structure for a set of \emph{Click} elements implementing the same functionality. The full implementation and performance comparison is, however, left for a future work.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{CCN routing protocol}\label{sec:augustus.ccn}
-\begin{algorithm}[htb]
+\begin{algorithm}[tb]
 %\begin{algorithm}[H]
   \DontPrintSemicolon
   \KwIn{$p$: CCN packet}
@@ -380,6 +414,7 @@ This way, the network holds in the routers' \gls{PIT}s a soft-state holding the 
 Moreover, although this was not included in the initial description, each interest packet is annotated with a random \emph{nonce} that is used to detect cyclic forwarding of the same packet and break the loop.
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Routing data structures}\label{sec:augustus.structures}
 As also suggested by the results detailed in the next chapter (section~\ref{sec:test.multicore}), the main bottleneck for routing performance consists of memory access. Indeed, all the data structures implemented into the Augustus router are cache-aware, relying on cache-aligned memory areas grouping in a single x86\_64 cache line ($64$ bytes) information that is needed at once at access time.
 This works best under the assumption that data structures do not fit in the processors' cache, thus cache space is the most scarce resource the router has to cope with.
@@ -391,7 +426,7 @@ It is worth noting that the \gls{PIT} and the \gls{CS} structures need to be upd
 The remainder of this section provides some implementation details for the three data structures involved in the routing procedure.
 
 \subsection{Content Store}\label{sec:augustus.cs}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \frame{\includegraphics[width=1\textwidth]{img/cs_pit_sketch.png}}
     \caption[Sketch for the data structure for the CS and orignal PIT.]{Sketch of the data structure for the CS. The original PIT design also used the same layout with a hash table and a ring.}
@@ -405,7 +440,7 @@ As outlined in section~\ref{sec:augustus.ccn}, the CS is always queried for exac
 
 In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
 
-\begin{figure}[htb]
+\begin{figure}[tb]
   \captionsetup{type=lstlisting}
   %\centering
   \begin{sublstlisting}[t]{.5\linewidth}
@@ -473,7 +508,7 @@ This procedure proved to work smoothly for the case where all interests were eve
 
 \subsubsection{Improved data structure design}\label{sec:augustus.pit.new}
 
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \frame{\includegraphics[width=1\textwidth]{img/new_pit_sketch.png}}
     \caption[Sketch for the improved PIT data structure]{Sketch for the improved PIT data structure.}
@@ -481,7 +516,7 @@ This procedure proved to work smoothly for the case where all interests were eve
   \end{center}
 \end{figure}
 
-\begin{figure}[htb]
+\begin{figure}[tb]
   \captionsetup{type=lstlisting}
   %\centering
   \begin{sublstlisting}[t]{.5\linewidth}
@@ -537,6 +572,7 @@ Nevertheless, because this technology was going through the patenting process, t
 
 Because we could not experiment with its full implementation, the \gls{FIB} was never put under stress throughout the experimental evaluation described in chapter\ref{chap:test}.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Multi-threading and NUMA awareness}\label{sec:augustus.numa}
 The Augustus router targets modern servers that are most often equipped with multiple CPU sockets, each containing multiple processing cores. The management of processing cores is aided by the DPDK abstraction library, which natively supports multi-threading and requires to pin at initialization time each thread (called a logical core, or \mono{lcore} in DPDK) to a physical processor: this prevents unneeded context switches, better exploiting local caches.
 
@@ -549,8 +585,9 @@ However, separating the \gls{PIT} and \gls{CS} among the threads poses a strong 
 
 To overcome this issue, the hardware multiqueue system available in modern NICs is configured to inspect the incoming packets and read a header field holding a hash of the content name, so that it will dispatch packets referring to the same name consistently to the same hardware queue: each queue is polled by a single thread, guaranteeing that two packets with the same name will be delivered to the same thread.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Click module port}\label{sec:augustus.click}
-\lstinputlisting[float=hbt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
+\lstinputlisting[float=bt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
 
 One limitation posed by the choice of a implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The to main ways to overcome this limitation could be either running the software in a virtual machine, or integrating it as a plug-in into an existing routing framework. While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the original developers showed a strong interest in porting the router to the \emph{Click} modular router \cite{click}: this approach has the advantage that it builds upon a well established software framework, being able to leverage its most recent ecosystem, ranging from optimized versions (like FastClick \cite{fastclick} or a closed-source version developed at Bell Labs) to the integration with different drivers and even virtualization (through projects like ClickOS \cite{clickos} or NetVM \cite{netvm}).
 
@@ -572,6 +609,7 @@ The full development of the Click integration and a comparison of its performanc
 
 This chapter presents the results of the performance measurements for the Augustus router: section~\ref{sec:test.env} presents the testbed setup, 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Testing environment}\label{sec:test.env}
 The experimental setup was composed of two twin machines, each equipped with two 10 Gbps Ethernet ports:
 table \ref{tab:test.hw} summarises their hardware components.
@@ -599,7 +637,7 @@ The machines were running Linux 3.16. Following installation recommendation by t
 \footnote{\url{https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 %\footnote{\url{https://web.archive.org/web/20150906011201/https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \frame{\includegraphics[width=.6\textwidth]{img/servers_back.jpg}}
     \caption[Back panel of the test servers]{Back panel of the test servers, with the SFP+ network ports wired with each other.}
@@ -607,8 +645,10 @@ The machines were running Linux 3.16. Following installation recommendation by t
   \end{center}
 \end{figure}
 
-\section{Throughput definition and 802.3 overhead}\label{sec:test.overhead}
+Of course, this experimental testbed is not the biggest where a tool like Augustus has the potential to be deployed on (indeed, networking devices often cope with tens of full duplex output ports, while we only have two). Nevertheless, the orders of magnitude involved are interesting by themselves, and should still give a rough idea of what we can expect from more powerful deployments.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Throughput definition and Ethernet overhead}\label{sec:test.overhead}
 Throughout this chapter, throughput is measured in two main ways: as packet throughput or as bit throughput.
 The \emph{packet throughput} is the most straightforward measurement of the routing capabilities of the tested system, and is defined as the number of data packets routed in a given time interval; in most experiments, this means that the actual number of routed packets is at least double, if counting also interest packets.
 Defining the \emph{bit throughput} requires the arbitrary choice of the layer where to count bits: here I will use the 802.3 \gls{SDU} layer, defining the bit throughput as the number of L2-payload bits belonging to data packets forwarded per time unit.
@@ -628,15 +668,16 @@ For this reason, throughout the rest of this chapter all the plots using bit thr
 
 Every data point presented in the next section was obtained from the router performance at steady state, taking periodic samples and averaging the measure over a time span that ranges from $20$ to $100$ seconds, depending on the variability that was found in the preliminary runs.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Traffic generator}\label{sec:test.traffgen}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \includegraphics[width=1.0\textwidth]{img/traffgen_increasing_len.pdf}
     \caption[Performance of the traffic generator alone]{Performance of the traffic generator alone. Note that the measurements here were extremely stable, with 3 to 5 significant digits.}
     \label{fig:test.traffgen-perf}
   \end{center}
 \end{figure}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \frame{\includegraphics[width=.5\textwidth,draft]{img/test_setup.pdf}}
     \caption{Traffic flow for the router evaluation experiments.}
@@ -656,30 +697,29 @@ Some of the additions developed during the thesis work include support for:
   \item generation of interest packets as a Poisson process.
 \end{itemize}
 
+Except when considering the generator by itself, experiments were run using the flow depicted in figure~\ref{fig:test.flow}: the interest generator initiates the loop pushing interest packets to port 0; interest packets then reach the router from port 0, and all names match \gls{FIB} entries that point to port 1 as their next-hop, so the router stores \gls{PIT} entries all pointing to port 0 and forwards all interests to port 1; interests are then received from the echo server and the corresponding data reply is generated and sent back through port 1: the router will then query the \gls{PIT} and forward the data packets through port 1; on the other side, data packets will be received, counted and dropped by the echo server.
+ 
 \subsection{Generation performance}
-
 Before starting to measure the router performance, it was useful to test the generator by itself in order to have a baseline measure and be sure it was able to fully load the router.
 To achieve this, two ports on the same servers were short-circuited together, with the generator running on the machine and sending interest packets on one port: the packets would then be received by the echo server running on the same machine and data would be sent in the backward direction. Finally, the (same) echo server could count the incoming data packets and drop them.
 
 The measurements were taken with one thread running the interest generator and one thread running the echo server, and are shown in figure~\ref{fig:test.traffgen-perf}: as expectable, for small packets (up to about 120 bytes) the overall performance is capped by the packet throughput, while for bigger packets the bit throughput limit introduced in section~\ref{sec:test.overhead} is reached.
 Because, as highlighted in the coming sections, this configuration proved to generate enough traffic to load (and overload) the router, the performance using multiple cores were not explored.
 
-\section{Single-threaded routing}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \includegraphics[width=1.0\textwidth]{img/augustus_increasing_len_0x1.pdf}
     \caption[Single-threaded routing performance at varying data packet size]{Routing performance when running the router on a single thread, at varying data packet size.}
     \label{fig:test.incr_len_single}
   \end{center}
 \end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Single-threaded routing}
+Figure\ref{fig:test.incr_len_single} presents the performance measured when running the Augustus router in single-thread mode: the maximum packet throughput reached little above $1.7$ \acrfull{Mpps}, with the full bandwidth that is fully exploited for packets starting from 700 Bytes. This result is already promising, because in the context of content distribution packets are expected to be fairly large, going as large as the underlying data-link layer supports it when large files are divided into chunks: for example, under Ethernet, packets of up to 9 KB are supported if jumbo frames are enabled, or else at least 1500 Bytes.
 
-Figure\ref{fig:test.incr_len_single}
-\todo[inline]{}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Multi-threaded routing}\label{sec:test.multicore}
-
-\subsection{CPUs and memory layout}\label{sec:test.multicore.layout}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \includegraphics[width=.7\textwidth]{img/cpus_horiz.pdf}
     \caption[Processors and caches layout on the test servers]{Representation of the processors and caches layout on the test servers.}
@@ -687,10 +727,14 @@ Figure\ref{fig:test.incr_len_single}
   \end{center}
 \end{figure}
 
-\todo[inline]{}
+Given that, with the precautions described in section \ref{sec:augustus.numa}, the load can be split among independent workers, multi-threading can be expected to improve on the single-threaded results. However, the amount of performance increase when running multiple threads is non-trivial to tell a priori and, because the routing load is heavily memory-intensive, can not be described as a function of the number of threads alone. This section first introduces the cache layout of the machines used for the experiments (\ref{sec:test.multicore.layout}), then presents the results of running the router with different number of threads and different thread-to-core map (\ref{sec:test.multicore.performance}).
+
+\subsection{CPUs and memory layout}\label{sec:test.multicore.layout}
+As anticipated in chapter~\ref{chap:augustus}, the access to the routing data structures makes most of the burden in the routing effort, and cache space is a key resource. Figure~\ref{fig:test.multicore.cpus} represents the CPUs and cache layout for the test servers: the two biggest rectangles represent the distinct processor boards installed: each holds $8$ processing cores and each core supports two hardware threads via hyperthreading, for a total of 32 cores as seen by the operating system.
+Each socket has a single L3 cache of $20$ MiB, while both L2 and L1 are core-private: each L2 cache holds $2$ MiB while L1 caches hold $512$ KiB each.
 
 \subsection{Performance by core mapping}\label{sec:test.multicore.performance}
-\begin{figure}[htb]
+\begin{figure}[tb]
   \begin{center}
     \includegraphics[width=.75\textwidth]{img/augustus_multithread.pdf}
     \caption[Routing performance with different threads count and core pinning]{Routing performance with different threads count and core pinning configurations. The core ID numbers refer to the ones in figure \ref{fig:test.multicore.cpus}. These measurements were taken with packets of $94$ bytes.}
@@ -698,18 +742,21 @@ Figure\ref{fig:test.incr_len_single}
   \end{center}
 \end{figure}
 
-\todo[inline]{}
+The performance measurements obtained by using different core mappings are shown in figure ~\ref{fig:test.multicore.coremap}. The first column, at about $1.6$ Mpps, refers to the single-thread execution and repeats the result shown in figure~\ref{fig:test.incr_len_single}. The next columns provide results with two threads: running on the two hardware threads on the same core shows a little improvement, which hints that the processing power was probably being the bottleneck in the single-core case. Nevertheless, when using two different cores on the same socket the performance boost from the single thread is little less than doubled, showing that the availability of more L1 and L2 caches does make a difference; finally, in the case where one core per socket is used, performance is actually doubled: this is no surprise, as we have actually doubled the amount of cache and we are now taking full advantage of the NUMA architecture, with each CPU-memory bus practically dedicated to each core.
 
-\begin{figure}[htb]
+Now focus on to the cases with four threads: when placing them on a single socket (``$0,4,8,12$''), even if we are increasing the overall L1 and L2 space, performance are even worse than the homologous 2-threaded case (the column labelled ``$0,14$''): this shows that the bottleneck is now at the level of L3 cache or local memory bus, so adding cores only increases conflicts, with a disastrous result. Moving to the column labelled ``$0-3$'', instead, we can see a $60\%$ improvement, suggesting that one thread per socket was still not fully exploiting the two L3 caches; however, the fact that this improvement is still far from the $2x$ we got when going from single to double threads suggests that we hit the limit of either L3 cache or memory access, or for the access to local memory access. Indeed, when trying with 8 processing cores the situation only gets worse, showing that the four cores were able to saturate the I/O capabilities. Finally, continuing to increasing the number of threads to $8$ (one per physical core) or $16$ (one per hardware thread), the situation only gets worse.
+
+\begin{figure}[tb]
   \begin{center}
     \includegraphics[width=1.0\textwidth]{img/augustus_increasing_len_0xF.pdf}
-    \caption[Routing performance ]{Routing performance at varying data packet size for the best configuration.}
+    \caption[Routing performance at varying data packet for the best multithread configuration.]{Routing performance at varying data packet size using cores 0 through 3, which was found to perform best in the fixed-size measurements outlined in figure~\ref{fig:test.multicore.coremap}.}
     \label{fig:test.multicore.incr_len}
   \end{center}
 \end{figure}
 
-\todo[inline]{}
+Figure~\ref{fig:test.multicore.incr_len} concludes this measurements showing the throughput profile over packet size for the configuration that performed best in the previous experiment: that full line rate exploitation is now reached for packets of 200 Bytes already.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Evaluation of the new PIT design}\label{sec:test.pit}
 
 \todo[inline]{}
@@ -720,11 +767,10 @@ Figure\ref{fig:test.incr_len_single}
 
 
 \chapter{Conclusions}
+\label{chap:conclusions}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-\section{Future work}
-\label{sec:future-work}
+\section{Future work}\label{sec:future-work}
 
 
 
@@ -747,7 +793,7 @@ Figure\ref{fig:test.incr_len_single}
 
 % ALGORITHM
 \begin{comment}
-\begin{algorithm}[htb]
+\begin{algorithm}[tb]
 %\begin{algorithm}[H]
   \DontPrintSemicolon
   \KwIn{$passages$}
@@ -835,10 +881,9 @@ Figure\ref{fig:test.incr_len_single}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-~\newpage ~\newpage
-
-\chapter*{Acknowledgements}
-\addcontentsline{toc}{chapter}{Acknowledgements}
+%~\newpage ~\newpage
+%\chapter*{Acknowledgements}
+%\addcontentsline{toc}{chapter}{Acknowledgements}
 
 
 \end{document}
