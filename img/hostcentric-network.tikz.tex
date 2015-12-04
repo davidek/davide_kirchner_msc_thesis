@@ -1,0 +1,20 @@
+\begin{tikzpicture}
+  \input{img/network.tikz.tex}
+
+  \node (dnsB) [left=of R2] {$DNS_B$};
+  \node (dnsC) [above=of R3] {$DNS_C$};
+
+  \draw [cable] (R2.west) -- (dnsB.east);
+  \draw [cable] (R3.north) -- (dnsC.south);
+
+  \draw [intline] plot [smooth,tension=.2] coordinates 
+    {(B.north) (R2.west) (R1.west) (A.south west)};
+  \draw [dataline] plot [smooth,tension=.2] coordinates
+    {(A.east) (R1.east) (R2.south east) (B.east)};
+
+  \draw [intline] plot [smooth,tension=.2] coordinates 
+    {([xshift=.2cm]C.north west) ([xshift=.2cm]R3.west) ([xshift=-.05cm]R2.south east) ([xshift=-.1cm]R1.east) ([xshift=-.1cm]A.south east)};
+  \draw [dataline] plot [smooth,tension=.2] coordinates
+    {([xshift=.3cm]A.east) ([xshift=.3cm]R2.south east) (R3.west) (C.north west)};
+
+\end{tikzpicture}

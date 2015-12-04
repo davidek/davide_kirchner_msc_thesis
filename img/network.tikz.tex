@@ -1,0 +1,21 @@
+
+
+%\tikzset{router/.style={circle,draw=black,very thin}}
+\tikzset{router/.style={circle,draw=white}}
+\tikzset{cable/.style={thick}}
+\tikzset{dataline/.style={opacity=.4,ultra thick,->}}
+\tikzset{intline/.style={dashed,opacity=.4,thick,->}}
+
+\node (A)                      {A};
+%\node[label={above right:R1}] (R1) [below=of A]        {\includegraphics{img/router.png}};
+\node [router] (R1) [below=of A]        {R1};
+\node [router] (R2) [below=of R1]       {R2};
+\node (B)  [below left=of R2]  {B};
+\node [router] (R3) [below right=of R2] {R3};
+\node (C)  [below=of R3]       {C};
+
+\draw [cable] (A.south)  -- (R1.north);
+\draw [cable] (R1.south) -- (R2.north);
+\draw [cable] (R2.south west) -- (B.north east);
+\draw [cable] (R2.south east) -- (R3.north west);
+\draw [cable] (R3.south) -- (C.north);

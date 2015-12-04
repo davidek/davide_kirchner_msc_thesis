@@ -32,6 +32,7 @@
  \newlist{inlineenum}{enumerate*}{1}
  \setlist[inlineenum]{label=\textit{\roman*})}
 \usepackage{tikz}
+ \usetikzlibrary{calc}
 \renewcommand{\bottomfraction}{0.6}  %
 \renewcommand{\topfraction}{0.75}    %  Fit more figures in text pages
 \newcommand{\mono}[1]{{\footnotesize \ttfamily #1}}
@@ -234,7 +235,7 @@ Combining the ICN approach with software defined networking results in a powerfu
 
 This work presents an evaluation of the performance of \emph{Augustus}, a software ICN router developed at Alcatel-Lucent Bell Labs. Among different flavours of ICN, Augustus implements the content-centric networking (CCN) routing protocol: data transfer is initiated by a client who wants to retrieved a resource, identified by a variable-length, hierarchical name (resembling a full file name in a rooted file system): the network has the freedom to retrieve the resource from any host holding a (signed) copy of the data, allowing to optimize for efficiency, responsiveness or throughput. CCN routing is based on data structures that must be updated and queried during the routing procedure: in the Augustus router, the structures are implemented with the design goal of minimizing the number of RAM accesses during operation, which is achieved by carefully placing information in each cache line. In particular, the work on performance evaluation highlighted a limitation in the design of the pending interest table (PIT), one such data structure, so a new layout is proposed following the same design principles: the described new structure was also implemented into the router itself, and the benefits of the improved design were quantified with an improvement of TODO \todo{finalize after last section} orders of magnitude in the loss counts when working close to the maximum load achievable by the router.
 
-The core part of this work consists of the performance evaluation of the router, which was conducted using two servers with two 10 Gbps Ethernet ports each, one running the tester router and the other generating traffic and collecting performance measurements. When running single-threaded, Augustus routed $1.7$ millions of data packets (and as many request packets -- ``interests'' in CCN jargon) per second, saturating the 10 Gbps link for packets of 700 Bytes or longer. Some interesting insights were obtained running the router in multiple threads and varying the mapping of threads on physical processing cores: % as outlined in figure~\ref{fig:abstract},
+The core part of this work consists of the performance evaluation of the router, which was conducted using two servers with two 10 Gbps Ethernet ports each, one running the tester router and the other generating traffic and collecting performance measurements. When running single-threaded, Augustus routed $1.7$ millions of data packets (and as many request packets -- ``interests'' in CCN jargon) per second, saturating the 10 Gbps link for packets of 700 Bytes or longer. Some interesting insights were obtained by running the router in multiple threads and varying the mapping of threads on physical processing cores: % as outlined in figure~\ref{fig:abstract},
 the throughput profile, which at first appeared hard to explain, can easily be understood by comparing it to the physical layout of the processing cores and cache layers, highlighting that memory access consists of the main bottleneck for this type of load.
 With the best core mapping found, the router managed to forward $5.4$ millions of data packets per second, thus saturating the link with packets of just 200 Bytes.
 
@@ -358,10 +359,28 @@ Different architecture choices have lead Hwang et al. to the development of NetV
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Information-centric networking}\label{sec:intro.icn}
-One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly being used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure TODO
+\begin{figure}[tb]
+  \centering
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \input{img/hostcentric-network.tikz.tex}
+    \caption{Host-centric}
+    \label{fig:intro.icn.a}
+  \end{subfigure}%
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \input{img/infocentric-network.tikz.tex}
+    \caption{Information-centric}
+    \label{fig:intro.icn.b}
+  \end{subfigure}
+  \caption[Comparison of host-centric and information-centric networking for content distribution]{Comparison of host-centric and information-centric networking for content distribution.}
+  \label{fig:intro.icn}
+\end{figure}
+
+One such proposal for a new networking paradigm starts from the consideration that the modern web is growingly being used for content distribution and that the host-centric approach followed by IP can cause significant inefficiencies: for example, a popular content published by host A in figure~\ref{fig:intro.icn.a}
 and requested by clients B and C will have to travel twice through routers R1 and R2. Moreover, before being able to request the resource to host A, clients will need to query a name resolution service and obtain its address.
 
-In contrast, the \glsfirst{ICN} paradigm aims at pushing the management of named resources into the network: in an ICN network, clients directly ask their router for a resource with a given name. The network will then take care of retrieving the requested resource regardless of where it's stored, and can exploit local cache at intermediate routers.
+In contrast, the \glsfirst{ICN} paradigm aims at pushing the management of named resources into the network: in an ICN network (figure~\ref{fig:intro.icn.b}), clients directly ask their router for a resource with a given name. The network will then take care of retrieving the requested resource regardless of where it's stored, and can exploit local cache at intermediate routers.
 
 \todo[inline]{More details on other approaches? ICN? \url{http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=6231276} describes other approaches than the one I've focused on (CCN), should I mention them?}
 
@@ -675,7 +694,7 @@ For packets with 46 bytes of L2 payload (which is the minimum size that does not
 
 For this reason, throughout the rest of this chapter all the plots using bit throughput are compared against the maximum throughput achievable at the given packet size.
 
-Every data point presented in the next section was obtained from the router performance at steady state, taking periodic samples and averaging the measure over a time span that ranges from $20$ to $100$ seconds, depending on the variability that was found in the preliminary runs.
+Every data point presented in the coming sections was obtained from the router performance at steady state, taking periodic samples and averaging the measure over a time span that ranges from $20$ to $100$ seconds, depending on the variability that was found in the preliminary runs.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Traffic generator}\label{sec:test.traffgen}
@@ -688,7 +707,8 @@ Every data point presented in the next section was obtained from the router perf
 \end{figure}
 \begin{figure}[tb]
   \begin{center}
-    \frame{\includegraphics[width=.5\textwidth,draft]{img/test_setup.pdf}}
+    %\frame{\includegraphics[width=.5\textwidth,draft]{img/test_setup.pdf}}
+    \input{img/test_flow.tkiz.tex}
     \caption{Traffic flow for the router evaluation experiments.}
     \label{fig:test.flow}
   \end{center}
@@ -763,7 +783,7 @@ Now focus on to the cases with four threads: when placing them on a single socke
   \end{center}
 \end{figure}
 
-Figure~\ref{fig:test.multicore.incr_len} concludes this measurements showing the throughput profile over packet size for the configuration that performed best in the previous experiment: that full line rate exploitation is now reached for packets of 200 Bytes already.
+Figure~\ref{fig:test.multicore.incr_len} concludes this measurements showing the throughput profile over packet size for the configuration that performed best in the previous experiment: full line rate exploitation is now reached for packets of 200 Bytes already.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Evaluation of the new PIT design}\label{sec:test.pit}
@@ -777,10 +797,19 @@ Figure~\ref{fig:test.multicore.incr_len} concludes this measurements showing the
 
 \chapter{Conclusions}
 \label{chap:conclusions}
-\todo[inline]{}
+
+This work presented a performance evaluation for Augustus, a software implementation of a routing application for \glsfirst{CCN}, focusing only on data plane routing: the software was tested on a general-purpose Linux server equipped with two 10 Gbps Ethernet ports.
+The experiments were aided by a custom traffic generation application running on a twin server, which was expanded throughout my work in order to support the required testing scenarios. 
+Moreover, during the tests an issue arose with the management and clean-up of the PIT, the data structure that holds the router's soft state in the form of pending interests. A new design was proposed and implemented following the same design principles: the benefits introduced by the new approach were measured, highlighting an improvement of TODO \todo{measure} when using the new data structure.
+
+When running single-threaded, the application managed to route $1.7$ millions of data packets per second, saturating the link with packets of $700$ Bytes or larger. Various tests with different multi-threading levels and configurations confirmed the working assumption that the main bottleneck resides in access to main memory, even when using data structures that are designed to minimize the  memory operations by explicit handling of cache-aligned substructures. On the testing environment, the best multi-threaded configuration was reached with four threads running on physical processors distributed among the two \gls{NUMA} nodes, an it yielded $5.4$ millions of data packets per second, saturating the link with packets of just $200$ Bytes.
+
+These results are promising in that they show that software defined networking can achieve performance that are ready for medium-scale deployments, even with the load imposed by a \gls{CCN} router, with data structures that are accessed read/write at the data plane.
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Future work}\label{sec:future-work}
-
+\todo[inline]{}
 
 
 %  SIMPLE PICTURE

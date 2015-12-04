@@ -1,0 +1,14 @@
+\begin{tikzpicture}
+  \input{img/network.tikz.tex}
+
+  \draw [intline] plot [smooth,tension=.2] coordinates 
+    {(B.north) (R2.west) (R1.west) (A.south west)};
+  \draw [dataline] plot [smooth,tension=.2] coordinates
+    {(A.east) (R1.east) (R2.south east) (B.east)};
+
+  \draw [intline] plot [smooth,tension=.2] coordinates 
+    {([xshift=.2cm]C.north west) ([xshift=.2cm]R3.west) ([xshift=-.2cm]R2.south east)};
+  \draw [dataline] plot [smooth,tension=.2] coordinates
+    {([yshift=.15cm,xshift=-.1cm]R2.south) (R2.south) (R3.west) (C.north west)};
+
+\end{tikzpicture}

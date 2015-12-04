@@ -1,0 +1,42 @@
+\begin{tikzpicture}
+
+  \tikzset{cable/.style={thick}}
+  \tikzset{dataline/.style={draw=black!50,ultra thick,->}}
+  \tikzset{intline/.style={dashed,draw=black!50,very thick,->}}
+
+
+  \node [rectangle,draw=black,minimum width=8cm,minimum height=1cm]
+    (augustus) {Augustus Router};
+  \node [rectangle,draw=black,minimum width=8cm,minimum height=1cm]
+    (pktgen) [below=1.5cm of augustus] {Traffic generator};
+
+
+  \newcommand\port[1]{ \draw #1 +(-3mm,-1pt) rectangle +(3mm,1pt) [fill]}
+
+  \coordinate (augustus p0) at ([xshift=-2cm]augustus.south);
+  \coordinate (augustus p1) at ([xshift=2cm]augustus.south);
+  \coordinate (pktgen p0) at ([xshift=-2cm]pktgen.north);
+  \coordinate (pktgen p1) at ([xshift=2cm]pktgen.north);
+
+  \port{(augustus p0)};
+  \port{(augustus p1)};
+  \port{(pktgen p0)};
+  \port{(pktgen p1)};
+
+  \node at (augustus p0.north) [anchor=south] {\footnotesize{p0}};
+  \node at (augustus p1.north) [anchor=south] {\footnotesize{p1}};
+  \node at (pktgen p0.south) [anchor=north] {\footnotesize{p0}};
+  \node at (pktgen p1.south) [anchor=north] {\footnotesize{p1}};
+
+  \draw [cable] (augustus p0) -- (pktgen p0);
+  \draw [cable] (augustus p1) -- (pktgen p1);
+
+  \draw [intline] ([xshift=-.2cm]pktgen p0) -- ([xshift=-.2cm]augustus p0)
+    node [midway, above, sloped] {\footnotesize{interest}};
+  \draw [intline] ([xshift=.2cm]augustus p1) -- ([xshift=.2cm]pktgen p1);
+
+  \draw [dataline] ([xshift=-.2cm]pktgen p1) -- ([xshift=-.2cm]augustus p1);
+  \draw [dataline] ([xshift=.2cm]augustus p0) -- ([xshift=.2cm]pktgen p0)
+    node [midway, above, sloped] {\footnotesize{data}};
+
+\end{tikzpicture}
