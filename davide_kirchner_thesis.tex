@@ -1,10 +1,14 @@
 %\documentclass[12pt,a4paper,oneside]{book}
 %\documentclass[12pt,a4paper,twoside]{book}
 \documentclass[11pt,a4paper,twoside,titlepage,openany]{book}
+%\documentclass[10pt,a4paper,twoside,titlepage,openany]{book}
 
 %\usepackage[outer=1.5cm,inner=2.5cm,top=2cm,bottom=2cm]{geometry}
 %\usepackage[outer=3cm,inner=3cm,top=4cm,bottom=3cm]{geometry}
+
 \usepackage[outer=3.5cm,inner=3.5cm,bottom=4cm]{geometry}
+
+%\usepackage[outer=1.5cm,inner=1.5cm,bottom=1.5cm,top=1.5cm]{geometry}
 
 \usepackage[english]{babel}
 
@@ -86,16 +90,6 @@
 \makeatother
 % ^^^  Acknowledgemts in cima  ^^^
 
-%glossary
-%\makeglossaries
-%\newacronym{GIS}{GIS}{Geographical Information System}
-%\newacronym{fromto}{SD pair}{Source-Destination node pair}
-
-
-% This is needed in order NOT to print blank pages, even if a chapter begins at odd page
-% even if in twoside. When document will be done, might be re-inserted
-%\let\cleardoublepage\clearpage
-
 \begin{document}
 
 \begin{titlepage}
@@ -156,6 +150,7 @@
   \end{center}
 \end{titlepage}
 
+\currentpdfbookmark{\contentsname}{\contentsname}  % add toc to pdf bookmarks but not to toc
 \tableofcontents
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -251,7 +246,7 @@ This work is placed at the intersection of the two research fields, studying the
 This Chapter introduces the research fields of \gls{SDN} (Section \ref{sec:intro.sdn}) and \gls{ICN} (Section \ref{sec:intro.icn}) providing an overview of the most recent works in both areas.
 Afterwards, Chapter \ref{chap:augustus} describes the routing protocol implemented by the router and gives details about the design and implementation of the required data structures.
 Chapter \ref{chap:test}, presents the measurements setup and details its results, composing the core of this work.
-Finally, Chapter \ref{chap:conclusions} summarizes the main achievements and results of my work, concluding this document.
+Finally, Chapter \ref{chap:conclusions} summarizes the main achievements and presents the open issues for future work, concluding this document.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Software defined networking}\label{sec:intro.sdn}
@@ -413,7 +408,7 @@ The \gls{CS} holds the data packets that are available locally, implementing the
 
 As outlined in Section \ref{sec:augustus.ccn}, the CS is always queried for exact matches in the name, so a hash table provides a simple and effective way to index cached structures. Moreover, the original designers chose to keep each hash table entry as small as possible by storing pointers to a ring (implemented as a circular array), which in turn stores the complete metadata and the pointer to the full packet, as depicted in figure \ref{fig:augustus.ht_ring}: this allows them to manage collisions by squeezing seven entries into fixed-sized buckets which can be fit into a single cache line. This architecture brings the number of cache misses per query to two in most cases: one for fetching the bucket and one for fetching the full metadata from the ring.
 
-In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
+In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
 
 \begin{figure}[tb]
   \captionsetup{type=lstlisting}
@@ -538,9 +533,8 @@ The \gls{FIB} is the structure that, similarly to an IP routing table, holds nex
 
 Also the basic part of the FIB structure is similar to the other data structures presented so far, as outlined in listing \ref{lst:augustus.fib}: a stripped-down hash tables with pointers to an external array where the rest of the data is stored. Note that, this time, there is no need for any special management for the external array, as it will be filled sequentially and, as long as the data plane is concerned, entries are never updated nor deleted.
 
-Moreover, the complete implementation of the Augustus router employs an additional \emph{prefix bloom filter} for faster longest prefix lookups: as detailed in the presenting the Caesar router by Perino et al. \cite{caesar}, which provided a starting point for the fully-software reimplementation in Augustus. This structure relies on multiple bloom filters in order to determine (with the possibility of infrequent errors) the length of the prefix that should be looked up in the hash table.
+Moreover, the complete implementation of the Augustus router employs an additional \emph{prefix bloom filter} for faster longest prefix lookups: as detailed in the work presenting the Caesar router \cite{caesar} (which provided a starting point for the fully-software reimplementation in Augustus), this structure relies on multiple bloom filters in order to determine (with the possibility of infrequent errors) the length of the prefix that should be looked up in the hash table.
 Nevertheless, because this technology was going through the patenting process, the implementation was not disclosed and we could not try it.
-
 Because we could not experiment with its full implementation, the \gls{FIB} was never put under stress throughout the experimental evaluation described in Chapter \ref{chap:test}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -757,7 +751,7 @@ While introducing the new implementation for the \acrlong{PIT} described in sect
 
 As a first result, figure \ref{fig:test.pit.thr} compares the routing throughput for the different PIT designs for the single-threaded case and for the best multi-threaded case: while the goal of the improved design was not performance improvement at the throughput level, it it interesting to notice that there was no performance penalty either, with even a small improvement in the 4-threaded case (measured under slight overload condition, as measures in previous sections).
 
-\todo[inline]{magari si vedrebbe ancora meglio se l'echo server perdesse dei pacchetti a caso (tipo, in media due al secondo)}
+%todo[inline]{magari si vedrebbe ancora meglio se l'echo server perdesse dei pacchetti a caso (tipo, in media due al secondo)}
 Indeed, as described more in detail in Section \ref{sec:augustus.pit}, the issue with the former design (and the reason it has been replaced) was due to the synchronous purging procedure: whenever a packet was lost and its \gls{PIT} entry came to expiry, it would take tens of milliseconds to purge the space, causing losses in the meanwhile. In our basic evaluation conditions, this happens when offered traffic is close to the maximum achievable throughput. Figure \ref{fig:test.pit.load_loss} shows the loss profile at increasing offered traffic, comparing the behaviour of the router when using the two different designs: it can be seen that the loss for the ring-based PIT starts increasing when the offered load is still lower than its routing capabilities; using the improved (ring-free) PIT, instead, the loss stays close to zero longer, increasing when the offered traffic is close to the maximum routing capacity. Close to the overload condition (from 4.9 to 5.3 Mpps), a loss decrease of over one order of magnitude can be observed.
 
 Note that the traffic generator does not currently keep track of individual sent packets: the estimation of the packet loss ration presented above results from comparing the number of sent interest packets to the number of received data packets in a given time window. While this works reasonably well to measure a loss ratio above $10^{-6}$, it does not offer precision when considering a loss ratio close to zero.
@@ -787,23 +781,39 @@ Another limitation of throughout the measurements presented in this work is that
 \chapter{Discussion and future work}
 \label{chap:conclusions}
 
-\todo[inline]{rephrase and extend -- (2) and (3) in the email}
-This work presented a performance evaluation for Augustus, a software implementation of a routing application for \glsfirst{CCN}, focusing only on data plane routing: the software was tested on a general-purpose Linux server equipped with two 10 Gbps Ethernet ports.
-The experiments were aided by a custom traffic generation application running on a twin server, which was expanded throughout my work in order to support the required testing scenarios. 
-Moreover, during the tests an issue arose with the management and clean-up of the PIT, the data structure that holds the router's soft state in the form of pending interests. A new design was proposed and implemented following the same design principles: the benefits introduced by the new approach were measured, highlighting a decrease in the packet loss of over one order of magnitude when using the new data structure under heavy load conditions.
+In this work, I presented the first results of the performance evaluation for Augustus, a software routing application for \glsfirst{CCN} based on DPDK for packet I/O.
+This first phase of the experimental performance evaluation will enable to proceed to more complex testing scenarios, with the plan to complete the measurements described in section \ref{sec:test.todos} in the months to come: this will give a deeper understanding of how core data plane functions for \gls{ICN} can be performed by software routing.
 
-When running single-threaded, the application managed to route $1.7$ millions of data packets per second, saturating the link with packets of $700$ bytes or larger. Various tests with different multi-threading levels and configurations confirmed the working assumption that the main bottleneck resides in access to main memory, even when using data structures that are designed to minimize the  memory operations by explicit handling of cache-aligned substructures. On the testing environment, the best multi-threaded configuration was reached with four threads running on physical processors distributed among the two \gls{NUMA} nodes, an it yielded $5.4$ millions of data packets per second, saturating the link with packets of just $200$ bytes.
+Under the simple testing scenarios described so far, the router could handle up to $5.4$ millions of data packets per second (and as many interest packets), saturating the 10 Gbps link for packets of $200$ bytes, which is promising when considering that the main application for technology is the distribution of large data chunks.
+One open question is how well a system like this could scale to support more ports on a single router (a router with two ports only is not suited for real application): while answering this would require an extended testing environment, an initial hint may come from exploiting all the current physical resources operating full duplex.
 
-These results are promising in that they show that software defined networking can achieve performance that are ready for medium-scale deployments, even with the load imposed by a \gls{CCN} router, with big data structures that are accessed read/write at the data plane.
+%When running single-threaded, the application managed to route $1.7$ millions of data packets per second, saturating the link with packets of $700$ bytes or larger. Various tests with different multi-threading levels and configurations confirmed the working assumption that the main bottleneck resides in access to main memory, even when using data structures that are designed to minimize the  memory operations by explicit handling of cache-aligned substructures. On the testing environment, the best multi-threaded configuration was reached with four threads running on physical processors distributed among the two \gls{NUMA} nodes, an it yielded $5.4$ millions of data packets per second, saturating the link with packets of just $200$ bytes.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Click module port}\label{sec:augustus.click}
+%This work presented a performance evaluation for Augustus, a software implementation of a routing application for \glsfirst{CCN}, focusing only on data plane routing: the software was tested on a general-purpose Linux server equipped with two 10 Gbps Ethernet ports.
+%The experiments were aided by a custom traffic generation application running on a twin server, which was expanded throughout my work in order to support the required testing scenarios. 
+%Moreover, during the tests an issue arose with the management and clean-up of the PIT, the data structure that holds the router's soft state in the form of pending interests. A new design was proposed and implemented following the same design principles: the benefits introduced by the new approach were measured, highlighting a decrease in the packet loss of over one order of magnitude when using the new data structure under heavy load conditions.
+
+%These results are promising in that they show that software defined networking can achieve performance that are ready for medium-scale deployments, even with the load imposed by a \gls{CCN} router, with big data structures that are accessed read/write at the data plane.
+\paragraph{} Starting from these first stages, the performance evaluation process presented all the characteristics of an experimental work: after installing and running the application for the first time, each performance measurement described above required a great care in making sure that the measuring process did not affect the measures themselves introducing unexpected bias; moreover, because the overall routing functionality is achieved by the interaction of a high number of software and hardware components (ranging from the software itself and the DPDK driver and library  to the NIC and CPU passing through the OS and the compiler), it was crucial to start with the simplest possible scenario and slowly build over it, making sure to obtain repeatable results after adding each variable into the measuring scenario; indeed, the results described were an obvious evidence that, as far as performance is concerned, hardware and software can not be considered separately.
+Additionally, at every new scenario it was necessary to have a complete understanding of the phenomena being studied in order to give meaning to the obtained results; as an additional example, while writing this document I started working on loss measurements with randomized traffic generation, but I encountered a behaviour that is extremely different from the once observed before, and will thus require a good deal of inspection in all the involved processes to make sense of it.
+
+\paragraph{Latency measurements} The results presented here are lacking any hint of how this software approach behaves with respect to latency in forwarding. Note that in the current testing configuration direct latency measurements could present errors due to the fact that traffic is also generated and measured by a software application based on the same technology as the router itself: reliably measuring latency would require to have full knowledge of the latency introduced by the traffic generator in order to account for it when putting the router in the loop. Again, because so many software and hardware components interact before and after the packet gets to be handled by Augustus itself, this may require digging into all the levels of the stack.
+
+\paragraph{Effect of compiler optimizations} Modern compilers implement optimization strategies that are getting more and more sophisticated and hardware-aware as technology advances. For all the tests performed so far, both Augustus and DPDK were compiled using the Gnu compiler (GCC) version $4.8.4$, the most recent version officially available for Ubuntu $14.04$. While these optimizations are usually most effective for CPU-bound load, it could be worth to check if and how performance are affected if using the latest GCC version or using ICC, a compiler developed at Intel optimizing for their processors.
+
+\paragraph{Cache partitioning} As discussed extensively in section \ref{sec:test.multicore}, cache space is a scarce resource, so tuning its management policy could have an important impact on performance. Although this is a whole other area of research, one possibility that could be explored is whether using a cache colouring strategy could result in a more efficient management and in better performance.
+
+%\todo[inline]{}
+%On a broader scale, a lot of work is to be done in the direction of defining and experimenting with control plane protocols for disseminating routing information in \gls{ICN} networks.
+
+
+\paragraph{Click module port}
 \lstinputlisting[float=bt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
 
-One limitation posed by the choice of a implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The two main ways to overcome this limitation could be either \begin{inlineenum} \item running the software in a virtual machine, or \item integrating it as a plug-in into an existing routing framework. \end{inlineenum}
+One limitation posed by the choice of implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The two main ways to overcome this limitation could be either \begin{inlineenum} \item running the software in a virtual machine, or \item integrating it as a plug-in into an existing routing framework. \end{inlineenum}
 While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the original developers showed a strong interest in porting the router to the \emph{Click} modular router \cite{click}: this approach has the advantage that it builds upon a well established software framework, being able to leverage its most recent ecosystem, ranging from optimized versions (like FastClick \cite{fastclick} or a closed-source version developed at Bell Labs) to the integration with different drivers and even virtualization (through projects like ClickOS \cite{clickos} or NetVM \cite{netvm}).
 
-For these reasons, alongside with the evaluation of the performance of the standalone router implementation described so far and in Chapter \ref{chap:test}, a work was started towards the porting of the router as a Click element library. The porting work is not part of this thesis and is being developed by Raihana Ferdous, a Ph.D. student at the ANS lab, in close collaboration with the original Augustus authors at Bell Labs.
+For these reasons, alongside with the evaluation of the performance of the standalone router implementation described so far, a work was started towards the porting of the router as a Click element library. The porting work is not part of this thesis and is being developed by Raihana Ferdous, a Ph.D. student at the ANS lab, in close collaboration with the original Augustus authors at Bell Labs.
 Nevertheless, this effort is worth mentioning here in order to show the direction where the project is moving, and because I contributed designing the API and with minor contributions to the element library itself (namely \mono{ICNInputMux} and \mono{ICNOutputDemux}, described hereafter).
 
 Before detailing the API, it is worth to quickly hint at Click's organization and configuration syntax. A Click router is defined by its configuration file, which represents a directed graph of \emph{elements}: packets travel their way along the graph edges, starting from an input element (which either received from the underlying network driver or generates new packets), until an element either drops it or sends it back to a NIC for forwarding. Each element is instantiated by referencing its full name and possibly specifying its parameters: instantiated elements can be given a name with the double colon syntax \mono{::}. Elements can have any number of input and output numbered \emph{ports}, noted with square brackets at the left (inputs) or right (outputs) of the corresponding element, and ports are connected with each other with left-to-right arrows \mono{->}.
@@ -811,10 +821,6 @@ Before detailing the API, it is worth to quickly hint at Click's organization an
 Listing \ref{lst:augustus.click} presents a sample (excerpt of a) Click configuration file which uses the proposed API: the single data structures are exposed as Click elements, each accepting a single input port for both interest and data packets. In this context, some care was needed in order to manage output links: note that the routing procedure is based on the notion of interfaces with point-to-point links, and note that throughout the procedure queries on all three data structures may result in a packet being emitted for sending. To simplify this flow, the extra elements \mono{ICNInputMux} and \mono{ICNOutputDemux} were introduced: the input element takes an arbitrary number of inputs and annotates each packet with the input port, emitting all packets on its single output, so that the core elements may inspect this annotation (both the CS and PIT need this). Core elements wishing to send a packet out will emit it on the proper port (port \mono{[1]} for CS and PIT and the only output port for the FIB) after tagging it with the desired output interface (or interfaces, in case of PIT aggregation): the output element will take care of reading the annotation and sending the packet to its corresponding output port (or ports), which must be wired to the output elements symmetrically with respect to inputs.
 
 The porting work is still ongoing: after my graduation I will probably get more directly involved and, once the development is completed, start working on comparing the performance of the router when running standalone versus as a Click module: while it is likely that a performance penalty will be introduced (due to the added layer of indirection in the software), it will be interesting to find out whether this margin will be low enough to be justified by the increased flexibility.
-
-\todo[inline]{}
-On a broader scale, a lot of work is to be done in the direction of defining and experimenting with control-plane protocols for disseminating routing information in \gls{ICN} networks.
-
 
 \begin{comment}
 \begin{table}[tb]
