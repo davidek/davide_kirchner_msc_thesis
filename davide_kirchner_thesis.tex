@@ -34,7 +34,7 @@
 \usepackage{subcaption}
 \usepackage[super]{nth}
 %\usepackage[xindy,toc]{glossaries}
-\usepackage[nottoc,chapter]{tocbibind} % ToC item for Bibliography at chapter level [no ToC item for ToC]
+\usepackage[nottoc,chapter,notlof,notlot]{tocbibind} % ToC item for Bibliography at chapter level [no ToC item for ToC]
 \usepackage[boxed,algochapter,vlined]{algorithm2e}
 \usepackage{indentfirst}  % Indent first line of first paragraph of chapters/sections/...
 \usepackage[inline]{enumitem}
@@ -808,7 +808,7 @@ Additionally, at every new scenario it was necessary to have a complete understa
 
 
 \paragraph{Click module port}
-\lstinputlisting[float=bt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt which uses the API under development]{extra/icnrouter.click.txt}
+\lstinputlisting[float=bt, captionpos=b, label=lst:augustus.click, frame=lines, caption=Sample Click configuration excerpt using the API under development]{extra/icnrouter.click.txt}
 
 One limitation posed by the choice of implementing a standalone software router is that it can not easily coexist on the same hardware (sharing the network cards) with other routing applications. The two main ways to overcome this limitation could be either \begin{inlineenum} \item running the software in a virtual machine, or \item integrating it as a plug-in into an existing routing framework. \end{inlineenum}
 While virtualization of network functions is an active research topic and reachable performance could be of the same order of magnitude, the original developers showed a strong interest in porting the router to the \emph{Click} modular router \cite{click}: this approach has the advantage that it builds upon a well established software framework, being able to leverage its most recent ecosystem, ranging from optimized versions (like FastClick \cite{fastclick} or a closed-source version developed at Bell Labs) to the integration with different drivers and even virtualization (through projects like ClickOS \cite{clickos} or NetVM \cite{netvm}).
@@ -865,24 +865,43 @@ The porting work is still ongoing: after my graduation I will probably get more 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%\chapter*{Lists}
-%\addcontentsline{toc}{chapter}{Lists}
-
-%\listoffigures
-%\listoftables
-  %  \cleardoublepage
-  %\phantomsection
-%\addcontentsline{toc}{chapter}{List of Algorithms}
-%\listofalgorithms
-%\addcontentsline{toc}{chapter}{List of Listings}
-%\lstlistoflistings
-
-\bibliography{davide_kirchner_thesis}
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %\printindex  % don't know what this is for, was suggested for glossary...
 \printglossaries
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\chapter*{Lists}
+\addcontentsline{toc}{chapter}{Lists}
+
+%\renewcommand{\listfigurename}{Figures}
+%\renewcommand{\listtablename}{Tables}
+%\renewcommand{\listalgorithmcfname}{Algorithms}
+%\renewcommand{\lstlistlistingname}{Listings}
+
+\makeatletter
+\renewcommand{\listoffigures}{\@starttoc{lof}}
+\renewcommand{\listoftables}{\@starttoc{lot}}
+\renewcommand{\listofalgorithms}{\@starttoc{loa}}
+\renewcommand{\lstlistoflistings}{\@starttoc{lol}}
+\makeatother
+
+\section*{Figures}
+\listoffigures
+\section*{Listings}
+\lstlistoflistings
+\section*{Tables}
+\listoftables
+\section*{Algorithms}
+%\addcontentsline{toc}{chapter}{List of Algorithms}
+\listofalgorithms
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\bibliography{davide_kirchner_thesis}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
