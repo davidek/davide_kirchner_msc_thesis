@@ -1,18 +1,16 @@
 %\documentclass[12pt,a4paper,oneside]{book}
 %\documentclass[12pt,a4paper,twoside]{book}
 \documentclass[11pt,a4paper,twoside,titlepage,openany]{book}
-%\documentclass[10pt,a4paper,twoside,titlepage,openany]{book}
+%\documentclass[10pt,a4paper,twoside,titlepage,openany]{book}  % review draft print
 
-%\usepackage[outer=1.5cm,inner=2.5cm,top=2cm,bottom=2cm]{geometry}
-%\usepackage[outer=3cm,inner=3cm,top=4cm,bottom=3cm]{geometry}
+%\usepackage[outer=1.5cm,inner=2.5cm,top=2cm,bottom=2cm]{geometry}  % suggested by DISI template
+%\usepackage[outer=1.5cm,inner=1.5cm,bottom=1.5cm,top=1.5cm]{geometry}  % review draft print
+\usepackage[outer=3.5cm,inner=3.5cm,bottom=4cm,left=3.5cm,right=3.5cm]{geometry}
 
-\usepackage[outer=3.5cm,inner=3.5cm,bottom=4cm]{geometry}
-
-%\usepackage[outer=1.5cm,inner=1.5cm,bottom=1.5cm,top=1.5cm]{geometry}
 
 \usepackage[english]{babel}
 
-\usepackage[hidelinks,breaklinks]{hyperref}  % added
+\usepackage[hidelinks,breaklinks]{hyperref}
 
 \usepackage{amsthm}
 \usepackage{graphicx}
@@ -121,16 +119,16 @@
     \LARGE{Scuola Superiore Sant'Anna, Pisa}\\
     \Large{Institute for Information, Communication and Perception Technology}
 
-    \vspace{1 cm} 
-    \Large{Graduate Programme\\
+    \vspace{1cm} 
+    \LARGE{Graduate Programme\\
       in Computer Science and Engineering
       %Master Degree Course in Computer Science
     }
 
-    \vspace{1 cm} 
+    \vspace{1cm} 
     \Large\textsc{Final thesis} 
 
-    \vspace{.5cm}
+    \vspace{1cm}
 
     \huge{Performance evaluation and design of a \\ software router for Information-Centric\\ Networking}
     %\Large{\it{Sottotitolo (alcune volte lungo - opzionale)}}
@@ -237,7 +235,7 @@ This allows to picture the dissemination of new networking paradigms made faster
 \chapter{Introduction}
 \label{chap:intro}
 
-Today's web is increasingly being used for content distribution, for applications ranging from rich web pages   to video streaming, but in this context the host-based approach to networking that gave birth to IP often leads to an inefficient utilization of the network resources: in the research for new paradigms to power the future   internet, the \gls{ICN} approach moves awareness of the content to the core of the   network, giving up the notion of host-to-host link and replacing it with a directory of named resources.
+Today's web is increasingly being used for content distribution, for applications ranging from rich web pages   to video streaming, but in this context the host-based approach to networking that is inherent to the TCP/IP protocol architecture often leads to an inefficient utilization of the network resources: in the research for new paradigms to power the future   internet, the \gls{ICN} approach moves awareness of the content to the core of the   network, giving up the notion of host-to-host link and replacing it with a directory of named resources.
 
 In the meanwhile, new general purpose high-performance hardware is opening new possibilities for software networking applications to overcome custom hardware solutions even for performance-sensitive functionalities, enabling a previously unseen flexibility in the implementation of network functionalities.
 
@@ -294,7 +292,7 @@ Moreover, NBA poses a strong focus on exploiting heterogeneous co-processors suc
 \paragraph{Virtualization} Another interesting application of software routers is the possibility to run network functions on virtual machines (VMs), which goes under the name of \acrfull{NFV}.
 Still allowing the flexibility introduced with \gls{SDN}, this is attractive to the cloud business in that it allows independent network functionalities to be deployed on the same hardware in isolation (both from a security point of view, and in memory/CPU shares) and offers the possibility to quickly and dynamically scale a service by allocating more equivalent VMs on different hardware. Of course, this comes at the price of adding one extra software layer between the NIC card and the application.
 
-One such work, developed by Martins et al. \cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a full Linux installation running on the privileged \emph{dom0} domain, where hardware be accessed directly: in order to boost performance, they relied on netmap \cite{netmap} on dom0, and wrote a custom virtual network driver for dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC, they obtained a throughput of little over 4 Mpps, corresponding to about $3.2$ Gbps with minimal size Ethernet frames (if measured at physical layer).
+One such work, developed by Martins et al. \cite{clickos}, is ClickOS: it is based on the Xen hypervisor\footnote{http://www.xenproject.org} and leverages its para-virtualization capabilities: they run Click over a minimalistic OS (based on the Xen-shipped MiniOS), aside with a full Linux installation running on the privileged \emph{dom0} domain, where hardware can be accessed directly: in order to boost performance, they relied on netmap \cite{netmap} on dom0, and wrote a custom virtual network driver for dealing with the communication between the hypervisor and the VMs. When running a sample IPv4 router on a single core and a 10 Gbps NIC, they obtained a throughput of little over 4 Mpps, corresponding to about $3.2$ Gbps with minimal size Ethernet frames (if measured at physical layer).
 
 Different architecture choices have lead Hwang et al. to the development of NetVM \cite{netvm}: the authors relied on QEMU\footnote{http://www.qemu.org} and KVM acceleration to run Linux on the host machine and the guests, using a DPDK-based userspace driver on the host; with some custom zero-copy host-guest communication structure, NetVM offers to the guest application a userspace library. Although they ported the userspace Click version to work in their setup, the authors recommend cascading services offered by multiple VMs exploiting the optimized VM-to-VM communication, in a way treating VMs similarly to Click components. NetVM also offers basic trust-group management capabilities. Testing their system on a machine with 12 cores and a 10 Gbps NIC card, the authors claim full speed with a native L3 forwarder and 6.8 Gbps (corresponding to about 9 \gls{Mpps}) with a Click-based router.
 
@@ -335,7 +333,7 @@ A key aspect to enable high-speed name-based routing is thus to optimize the dat
 
 So et al. \cite{ndn_fast_dosresistant} proposed an algorithm to perform the longest-prefix match in the \gls{FIB} using a hash-table guaranteeing bounded number of reads in the worst-case, regardless of the number of components in the requested resource identifier. Their work also focuses on the optimization of the hash tables and the hashing function and on the possibility to partition the \gls{FIB} table among multiple processing cores.
 
-In another work, Perino et al. \cite{caesar} have proposed Caesar, a router implementing a 2-stage longest-prefix match (LPM) algorithm based on a so-called prefix bloom filter: multiple bloom filters are queried to find (with the possibility of errors towards longer prefixes) the length of the prefix stored in the \gls{FIB} (i.e. the routing table), and a successive single lookup in a hash table finds the entry itself: thus, the required memory access operations for the LPM to two in most cases. Caesar also supports distributing the \gls{FIB} among multiple network processing units (NPUs) and GPU computation offloading, targeting dedicated router hardware programmable at the firmware level.
+In another work, Perino et al. \cite{caesar} have proposed Caesar, a router implementing a 2-stage longest-prefix match (LPM) algorithm based on a so-called prefix bloom filter: multiple bloom filters are queried to find (with the possibility of errors towards longer prefixes) the length of the prefix stored in the \gls{FIB} (i.e. the routing table), and a successive single lookup in a hash table finds the entry itself: thus, the number of memory access operations required for the LPM is two in most cases. Caesar also supports distributing the \gls{FIB} among multiple network processing units (NPUs) and GPU computation offloading, targeting dedicated router hardware programmable at the firmware level.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -385,9 +383,9 @@ Note that pending interest entries must expire, as there is no guarantee that th
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Routing data structures}\label{sec:augustus.structures}
-As also suggested by the results detailed in the next Chapter (Section \ref{sec:test.multicore}), the main bottleneck for routing performance consists of memory access. Indeed, all the data structures implemented into the Augustus router are cache-aware, relying on cache-aligned memory areas grouping in a single x86\_64 cache line ($64$ bytes) information that is needed at once at access time.
+As also suggested by the results detailed in the next Chapter (Section \ref{sec:test.multicore}), the main bottleneck for routing performance consists of memory access. Indeed, all the data structures implemented into the Augustus router are cache-aware, relying on cache-aligned memory areas grouping in a single x86\_64 cache line ($64$ bytes) information that is needed at once at query time.
 
-This mechanism makes sense under the assumption that data structures do not fit in the processors' cache as a hole, so most accesses will result in L3 cache misses: with this mechanism, it is possible (with high probability) to tell whether an entry is present in a hash table using a single RAM fetch, as all the relevant information will be stored in a single cache line.
+This mechanism makes sense under the assumption that data structures do not fit in the processors' cache as a whole, so most accesses will result in L3 cache misses: with this mechanism, it is possible (with high probability) to tell whether an entry is present in a hash table using a single RAM fetch, as all the relevant information will be stored in a single cache line.
 
 Moreover, all data structures are allocated at bootstrap time, so that no expensive memory management procedure needs to be called during data plane routing operations.
 
@@ -408,7 +406,7 @@ The \gls{CS} holds the data packets that are available locally, implementing the
 
 As outlined in Section \ref{sec:augustus.ccn}, the CS is always queried for exact matches in the name, so a hash table provides a simple and effective way to index cached structures. Moreover, the original designers chose to keep each hash table entry as small as possible by storing pointers to a ring (implemented as a circular array), which in turn stores the complete metadata and the pointer to the full packet, as depicted in figure \ref{fig:augustus.ht_ring}: this allows them to manage collisions by squeezing seven entries into fixed-sized buckets which can be fit into a single cache line. This architecture brings the number of cache misses per query to two in most cases: one for fetching the bucket and one for fetching the full metadata from the ring.
 
-In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as the CRC module the HT size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is only loaded from memory (and the full name is compared) when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
+In order to exploit this structure, the name hash works in two stages: first, a 32-bit \gls{CRC} sum of the name is computed, then the bucket index is obtained as CRC value mod table size: after fetching the bucket, the full \gls{CRC} is compared to the ones stored in each entry in the matching bucket, until a match is found or the bucket end is reached. This way, the ring entry is loaded from memory (and the full name is compared) only when the 32 bit hash matches; of course, in case of a collision in the CRC hash, this procedure may cause an extra cache miss.
 
 \begin{figure}[tb]
   \captionsetup{type=lstlisting}
@@ -459,7 +457,7 @@ struct orig_pit_ring_entry {
 \end{figure}
 
 \subsection{Pending Interest Table}\label{sec:augustus.pit}
-As the name suggests, the \gls{PIT} stores information for interests that have not been satisfied yet. This is the key structure for building the reverse path that a data packet will have to travel in order to reach the host requesting for it. Moreover, in case two clients request the same resource at about the same time, the PIT entries will be aggregated, thus building a multicast distribution tree for popular content.
+As the name suggests, the \gls{PIT} stores information for interests that have not been satisfied yet. This is the key structure for building the reverse path that a data packet will have to travel in order to reach the host requesting for it. Moreover, in case two clients request the same resource at about the same time, the PIT entries will be aggregated, thus forming a multicast distribution tree for very popular content.
 As with the \gls{CS}, the PIT is always queried for exact matches.
 
 Because a pending interest might stay so indefinitely (e.g. if the interest or data are lost upstream due to congestion), PIT entries need an expiry time that accounts for a worst-case round trip time from the router to the upstream resource. Meanwhile, long expiry times require the PIT to grow larger in order to fit all possible pending interests in the worst case.
@@ -469,10 +467,10 @@ During the experiments, an expiry time of $1$ second was chosen, as it was consi
 In its original implementation, the PIT layout was identical to the CS, with a stripped-down hash table and a ring storing most of the needed data. It obviously differs in the fields stored in the ring entry, as highlighted in listing \ref{lst:augustus.cs_oldpit}. The remaining parts of this Section highlight the limitations of this approach and introduce an improved design overcoming them.
 
 \subsubsection{PIT purging issue}\label{sec:augustus.pit.purge}
-The described approach introduced the need for a PIT purging procedure: while the management of the ring structure is extremely simple and efficient when operated in a FCFS manner (as in the CS), it only allows a contiguous region of cells to be occupied. Thus, whenever a data packet comes that matches an entry other than  the bottom one, it has to be lazily deleted until all ``previous'' entries (i.e. the ones between the bottom pointer and the deleted one) are also deleted.  
-Thus, the purging procedure was designed in order to clean up space from the entries at the bottom of the ring that were either expired or lazily deleted.
+The described approach introduced the need for a PIT purging procedure: while the management of the ring structure is extremely simple and efficient when operated in a first-come-first-served manner (as in the \gls{CS}), it only allows a contiguous region of cells to be occupied. Thus, if a data packet matches an entry other than the bottom one, it has to be lazily deleted until all ``previous'' entries (i.e. the ones between the bottom pointer and the deleted one) are also deleted.  
+Thus, the purging procedure periodically cleans up space starting from the bottom of the ring, removing entries that are either expired or lazily deleted.
 
-This procedure proved to work smoothly for the case where all interests were eventually satisfied. However, whenever even a single PIT entry came to expiry, it would prevent the purging procedure to be effective for $1$ second (the expiry time). In the meanwhile, when operating at the maximum rate, almost all the remaining entries would fill up and never get freed, blocked by the one bound to expire. Finally, after the expiration of the blocking entry, the purging procedure would free all the entries marked for deletion, up to the first valid one; at that point, the entries to be cleaned were often in the order of one million, causing the purge procedure to take $10$ to $15$ milliseconds to run: at the rate achieved by the router, this corresponds to about $13000$ to $20000$ packets that would be lost in a row.
+This approach proved to work smoothly for the case where all interests were eventually satisfied. However, whenever even a single PIT entry came to expiry, it would prevent the purging procedure to be effective for $1$ second (the expiry time). In the meanwhile, when operating at the maximum rate, almost all the remaining entries would fill up and never get freed, blocked by the one bound to expire. Finally, after the expiration of the blocking entry, the purging procedure would free all the entries marked for deletion, up to the first valid one; at that point, the entries to be cleaned were often in the order of one million, causing the purge procedure to take $10$ to $15$ milliseconds to run: at the rate achieved by the router, this corresponds to about $13000$ to $20000$ packets that would be lost in a row.
 
 \subsubsection{Improved data structure design}\label{sec:augustus.pit.new}
 
@@ -524,7 +522,8 @@ struct fib_array_entry {
 
 In order to overcome this issue, a new layout for the PIT was designed and implemented into the router: as depicted in figure \ref{fig:augustus.newpit}, the new design relies solely on a hash table. Nevertheless, following the design principle that guided the original development, the first cache line of each bucket is used as an index for the ones to come: as detailed in listing \ref{lst:augustus.newpit}, the bucket index contains the full 32 bit CRC hash, one bit indicating the slot's occupancy and the expiry timestamp. This way, the new structure keeps the property that, except for CRC collisions, a single cache miss is enough to determine whether a name is present as a valid entry in the PIT.
 
-Note that this new structure does not require a periodic purge operation: after loading the bucket index from main memory, the lookup procedure may scan the whole bucket index with no additional memory operations, treating expired entries as empty slots.
+Note that this new structure does not require a periodic purge operation at all: after loading the bucket index from main memory, the lookup procedure may scan the whole bucket index with no additional memory operations, treating expired entries as empty slots.
+This comes at the cost of the extra space required for the bigger slots that are normally unused; however, in this case main memory is abundant and allocated unused slots do not impact on performance.
 
 Section \ref{sec:test.pit} presents a comparison of the packet loss profile before and after introducing the new PIT implementation.
 
@@ -539,9 +538,9 @@ Because we could not experiment with its full implementation, the \gls{FIB} was 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Multi-threading and NUMA awareness}\label{sec:augustus.numa}
-The Augustus router targets modern servers that are most often equipped with multiple CPU sockets, each containing multiple processing cores. The management of processing cores is aided by the DPDK abstraction library, which natively supports multi-threading and requires to pin at initialization time each thread (called a logical core, or \mono{lcore} in DPDK) to a physical processor: this prevents unneeded context switches, better exploiting local caches.
+The Augustus router targets modern servers that are most often equipped with multiple CPU sockets, each containing multiple processing cores. The management of processing cores is aided by the DPDK abstraction library, which natively supports multi-threading and requires to pin each thread (called a logical core, or \mono{lcore} in DPDK) to a physical processor at initialization time: this prevents unneeded context switches, better exploiting local caches.
 
-When multiple CPU sockets are installed on a server, it is common that separate memory banks are directly attached to each one, resulting in a \glsfirst{NUMA} architecture: each processing core has a direct access to memory allocated on a bank on the same socket (called NUMA node), while access to ``remote'' memory is slower and may cause extra bus conflicts.
+When multiple CPU sockets are installed on a server, it is common that separate memory banks are directly attached to each one, resulting in a \glsfirst{NUMA} architecture: each processing core has a direct access to memory allocated on a bank on the same socket (called NUMA \emph{node}), while access to ``remote'' memory is slower and may cause extra bus conflicts.
 
 Moreover, in the context of high-speed packet routing, it is not feasible to manage shared data structures with semaphores, as they introduce an excessive overhead: whenever possible, thread-private data structures are used for read/write operations and shared structures are accessed read-only by all-but-one threads.
 
@@ -586,7 +585,7 @@ table \ref{tab:test.hw} summarises their hardware components.
 
 Only the 10 Gbps ports were used for the measurements: corresponding ports in the two machines were connected with passive copper cables attached to the SPF+ ports. On each server, one Gigabit port was used for a management connection, while the remaining port was left unused.
 
-The machines were running Linux 3.16. Following installation recommendation by the DPDK authors, the command line for the kernel provided the allocation of 1 GB huge pages, which were then mounted with the dedicated pseudo-filesystem.%
+The machines were running GNU/Linux with kernel 3.16. Following installation recommendation by the DPDK authors, the command line for the kernel provided the allocation of 1 GB huge pages, which were then mounted with the dedicated pseudo-filesystem.%
 \footnote{\url{https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 %\footnote{\url{https://web.archive.org/web/20150906011201/https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt}}
 
@@ -607,7 +606,7 @@ The \emph{packet throughput} is the most straightforward measurement of the rout
 Defining the \emph{bit throughput} requires the arbitrary choice of the layer where to count bits: here I will use the 802.3 \gls{SDU} layer, defining the bit throughput as the number of L2-payload bits belonging to data packets forwarded per time unit.
 
 This definition has the advantage of being closer to the throughput that would be measured at the application layer. However, this also means that the resulting bit throughput is not directly comparable with the one measured at the physical layer, as reported on NIC data sheets and on physical networking standards.
-Indeed, unless the payload is so small that extra padding is required, the transmission of a 802.3 packet adds to the payload at least the equivalent of 38 bytes (octets) on wire \cite{ethernet}:
+Indeed,  the transmission of a 802.3 packet adds to the payload at least the equivalent of 38 bytes (octets) on wire \cite{ethernet} (even more for small payloads, which requires extra padding):
 \begin{itemize}[noitemsep,nolistsep]
 \item 7 octets preamble,
 \item 1 octet Start of Frame Delimiter,
@@ -767,10 +766,10 @@ So far, the experimental evaluation was limited to using the links in a ``preval
 Another point where the measurements taken still lack is in the fact that traffic is generated at a constant rate, without introducing any load pikes nor any bursty behaviour. Instead, it will be important to also test the router in a less predictable environment: as the patterns of interactions between non deterministic arrivals and the queuing implemented at different levels in the hardware and software can grow complex, it is important to ensure they do not have devastating effects overall performance.
 A related issue is that for any interest packet forwarded by the system, a data packet will come in reply with a delay that is small and uniform among subsequent packets; of course, even in this simplified setup packets are lost when to the link is fully utilized (as observed in Section \ref{sec:test.pit}), but again the loss pattern is peculiar to the lab environment.
 
-In the described measurements, all incoming interests matched the same single entry in the FIB: it is crucial to also include put stress on the FIB, as a router of this type should be able to scale to at least millions of entries, if not tens or hundreds of millions. Whereas the full implementation of the FIB remains undisclosed by the authors, different strategies could be used to still get a more realistic scenario: 
+In the described measurements, all incoming interests matched the same single entry in the FIB: it is crucial to also put stress on the FIB, as a router of this type should be able to scale to at least millions of entries, if not tens or hundreds of millions. Whereas the full implementation of the FIB remains undisclosed by the authors, different strategies could be used to still get a more realistic scenario: 
 \begin{inlineenum}\item use the implementation as it is (with successive lookups in the hash table, longest prefix to shortest), aiming at a lower bound for the performance of the actual router; \item use this implementation, but craft the dataset so as to bound the number of prefix misses in the hash table; or of course \item obtain the permission to use or reimplement the full data structure with the prefix bloom filter as detailed in the paper describing Caesar \cite{caesar}.\end{inlineenum}
 
-Another limitation of throughout the measurements presented in this work is that the \gls{CS} was kept up to date but was never actually used, as each generated interest packet would ask for a different resource name: it is important to also study a model of interest arrivals and dimension the CS so as to maximise the probability of a hit while keeping its size manageable.
+Another limitation of the throughout measurements presented in this work is that the \gls{CS} was kept up to date but was never actually used, as each generated interest packet would ask for a different resource name: it is important to also study a model of interest arrivals and dimension the CS so as to maximise the probability of a hit while keeping its size manageable.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
