@@ -8,14 +8,27 @@
 
 %\usepackage{titling}  % for \thetitle macro
 \usepackage[vlined]{algorithm2e}
-\newcommand{\mono}[1]{\texttt{#1}}
+\newcommand{\monobig}[1]{\texttt{#1}}
+\newcommand{\mono}[1]{{\footnotesize \ttfamily #1}}
 \usepackage{comment}
+\usepackage[super]{nth}
 \usepackage{verbatim}
-\usepackage{pgf}  % for matplotlib-exported images
+\usepackage{listings}
+ \lstset{basicstyle=\footnotesize\ttfamily,frame=none}
+%\usepackage{enumitem}  % no: conflicts with beamer
 \usepackage{tikz}
+ \usetikzlibrary{positioning}
+ \usetikzlibrary{calc}
+ \usetikzlibrary{shapes.misc}
+\usepackage{relsize}
 
-\setbeamerfont{itemize/enumerate subbody}{size=\small} % body size
-\setbeamertemplate{itemize subitem}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\circ$}}  % symbol size
+%\setbeamerfont{itemize/enumerate subbody}{size=\small} % body size
+%\setbeamertemplate{itemize subitem}{\scriptsize\raise1.25pt\hbox{\donotcoloroutermaths$\circ$}}  % symbol size
+
+
+\mode<handout>{
+  \setbeamercolor{background canvas}{bg=white}
+}
 
 % don't count bibliography and extra slides for the progress bar
 % from http://stackoverflow.com/a/2370399/1319447
@@ -28,12 +41,14 @@
   \addtocounter{framenumber}{\value{framenumbervorappendix}} 
 }
 
-\title{Performance evaluation and design\\of a software Information Centric Networking router}
-\subtitle{M.Sc. thesis preliminary}
-\date{\today}
+\input{custom_titlepage.tex}
+
+\title{Performance evaluation and design of a software router for Information-Centric Networking}
+\subtitle{}
+\date{December \nth{18}, 2015}
 \author{Davide Kirchner}
 \institute{University of Trento / Scuola Superiore Sant'Anna}
-%\titlegraphic{\hfill\includegraphics[height=1.5cm]{img/unitn_logo.pdf}}
+\titlegraphic{\centering\includegraphics[height=1.5cm]{img/logo_unitn_blu.jpg}\hspace{2em}\includegraphics[height=1.5cm]{img/logo_santanna.jpg}}
 
 %\usepackage{biblatex}
 %\addbibresource{davide_kirchner_thesis.bib}
@@ -56,23 +71,174 @@
 
 \section{Introduction}
 
+\subsection{Information centric networking}
+\begin{comment}
+\begin{frame}[fragile]
+  \frametitle{Information Centric Networking}
+  \textbf{Host-centric} networking (IP): retrieve \mono{unitn.it/about/intro.mp4}
+  \begin{itemize}
+    \item Get the address of \mono{unitn.it}
+    \item Ask your router to deliver a request for \mono{/about/intro.mp4} to that host
+    \item Wait for the data
+  \end{itemize}
+  \textbf{Information-centric} networking: retrieve \mono{it/unitn/about/intro.mp4}
+  \begin{itemize}
+    \item Ask your router for the file \mono{it/unitn/about/intro.mp4}
+    \item Wait for the data
+    \item[$\rightarrow$]
+      The network will take care of fetching the content
+    \item[$\rightarrow$]
+      Allows for transparent in-network \textbf{caching}
+  \end{itemize}
+\end{frame}
+\end{comment}
+\begin{frame}[fragile]
+  \frametitle{Host-Centric Networking}
+  \begin{columns}[c,onlytextwidth]
+    \column{.35\linewidth}
+    \resizebox{!}{.7\textheight}{%
+      \begin{tikzpicture}
+        \input{img/network.tikz.tex}
+        % add dns to physical topology
+        \node (dnsB) [above=of B] {$DNS_B$};
+        \node (dnsC) [above=of R3] {$DNS_C$};
+        \draw [cable] (R2.west) -- (dnsB.east);
+        \draw [cable] (R3.north) -- (dnsC.south);
+        % ANIMATED packets
+        \setcounter{beamerpauses}{2}
+        % DNS_B
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) ([yshift=-1mm]R2.west) ([yshift=-1mm]dnsB.east)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {(dnsB.south east) ([yshift=-2mm,xshift=-2mm]R2.west) ([xshift=-2mm]B.north)};
+        % failed request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west) (R1.west) (A.south west)};
+        \draw<.|handout:0> [dataline,-] plot [smooth,tension=.2] coordinates
+          {(A.east) (R1.east) (R2.south east) ([xshift=-5mm,yshift=-7mm]R2.south)}
+          node [rotate=40, opacity=1, ultra thick, draw=black!80, cross out, inner sep=0pt, minimum width=4pt, minimum height=4pt] {};
+        %successful request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west) (R1.west) (A.south west)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {(A.east) (R1.east) (R2.south east) (B.east)};
+        % DNS_C
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates
+          {(C.north east) (R3.east) ([xshift=2mm]dnsC.south)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=4mm]dnsC.south) ([xshift=2mm]R3.east) ([xshift=1mm]C.east)};
+        % request from C
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {([xshift=.2cm]C.north west) ([xshift=.2cm]R3.west) ([xshift=-.05cm]R2.south east)
+           ([xshift=-.1cm]R1.east) ([xshift=-.1cm]A.south east)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=0mm]A.east) ([xshift=1mm]R1.east) ([xshift=1mm]R2.south east)
+           (R3.west) (C.north west)};
+      \end{tikzpicture}
+    }
+    \column{.65\linewidth}
+    Current paradigm: \textbf{host-centric}
+
+    The network provides host-to-host links
+    
+    Example: get \mono{updates.com/sw/v4.2.5.tar.gz}
+
+    \setcounter{beamerpauses}{2}
+    {
+      \setlength{\leftmargini}{.7em}
+      \setbeamertemplate{itemize item}{}
+      \begin{itemize}
+        \item<+-> $B \rightarrow DNS_B$ \hfill Address of \mono{updates.com}?
+        \item<.-> $DNS_B \rightarrow B$ \hfill \mono{100.0.0.42} (``$A$'')
+        \item<+-> $B \rightarrow R2 \rightarrow R1 \rightarrow A$ \hfill \mono{/sw/v4.2.5.tar.gz}?
+        \item<.-> $A \rightarrow R1 \rightarrow R2 \not\rightarrow B$ \hfill Data
+        \item<+-> \textcolor{.!50}{$B \rightarrow R2 \rightarrow R1 \rightarrow A$ \hfill \mono{/sw/v4.2.5.tar.gz}?}
+        \item<.-> $A \rightarrow R1 \rightarrow R2 \rightarrow B$ \hfill Data
+        %  \vspace{4pt}
+        %\item $C \rightarrow R3 \rightarrow R2 \rightarrow R1 \rightarrow A$ \\ \hfill \mono{/sw/v4.2.5.tar.gz}?
+        %\item $A \rightarrow R1 \rightarrow R2 \rightarrow R3 \rightarrow C$ \hfill Data
+      \end{itemize}
+    }
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Information-Centric Networking}
+  \begin{columns}[c,onlytextwidth]
+    \column{.35\linewidth}
+    \resizebox{!}{.7\textheight}{%
+      \begin{tikzpicture}
+        \input{img/network.tikz.tex}
+        % ANIMATION
+        \setcounter{beamerpauses}{2}
+        % failed request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west) (R1.west) (A.south west)};
+        \draw<.|handout:0> [dataline,-] plot [smooth,tension=.2] coordinates
+          {(A.east) (R1.east) (R2.south east) ([xshift=-5mm,yshift=-7mm]R2.south)}
+          node [rotate=40, opacity=1, ultra thick, draw=black!80, cross out, inner sep=0pt, minimum width=4pt, minimum height=4pt] {};
+        % successful request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {(R2.south) (B.east)};
+        % request from C
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {([xshift=1mm]C.north west) ([xshift=1mm]R3.west) ([xshift=-1mm]R2.south east)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=0mm]R2.south) (R3.west) (C.north west)};
+      \end{tikzpicture}
+    }
+    \column{.65\linewidth}
+    \textbf{Information-centric} networking
+
+    The network is content-aware: L3 routing is based on \emph{resource names}.
+    
+    Example: get \mono{/com/updates/sw/v4.2.5.tar.gz}
+
+    \setcounter{beamerpauses}{2}
+    {
+      \setlength{\leftmargini}{.7em}
+      \setbeamertemplate{itemize item}{}
+      \begin{itemize}
+        \item<+-> $B \rightarrow R2 \rightarrow R1 \rightarrow A$ \\
+          \hfill \mono{/com/updates/sw/v4.2.5.tar.gz}?
+        \item<.-> $A \rightarrow R1 \rightarrow R2 \not\rightarrow B$ \hfill Data
+        \item<+-> $B \rightarrow R2$ \hfill \mono{/sw/v4.2.5.tar.gz}?
+        \item<.-> $R2 \rightarrow B$ \hfill Data
+        %  \vspace{4pt}
+        %\item $C \rightarrow R3 \rightarrow R2 \rightarrow R1 \rightarrow A$ \\ \hfill \mono{/sw/v4.2.5.tar.gz}?
+        %\item $A \rightarrow R1 \rightarrow R2 \rightarrow R3 \rightarrow C$ \hfill Data
+      \end{itemize}
+    }
+  \end{columns}
+\end{frame}
+
+
 \subsection{Software defined networking}
 \begin{frame}[fragile]
   \frametitle{Software defined networking}
-  \pause
-  Why software router? \pause Flexibility:
+  Current routing infrastructure: hardware-based
   \begin{itemize}
-    \item Increasingly complex network functionalities
-    \item Quicker development/deployment cycle and (re)configuration
-    \item Notable example: the \textit{Click} modular router \cite{click}
-    \item Hardware can be dynamically allocated to different network functions
-    \item Can even be virtualized%
-      \ \cite{clickos,netvm}
-      %: \textit{ClickOS} \cite{clickos}, \textit{NetVM} \cite{netvm}
-      %\footnote{\bibentry{clickos}}
+    \item High performance (IP backbone: 100s Gbps to Tbps)
+    \item Increasingly complex network functionalities %There's more to netwoking devices than IP routers
+      \begin{itemize}
+        \item Firewalls, web proxies, VPN bridges, NATs, \dots
+      \end{itemize}
+    \item Reconfiguration is often hard, hardware re-purpose impossible
   \end{itemize}
-  \pause 
-  Why now? \pause
+  Why software router? Flexibility:
+  \begin{itemize}
+    %\item Increasingly complex network functionalities
+    \item Quicker development/deployment cycle and (re)configuration
+    \item Hardware can be dynamically allocated to network functions
+    \item Can even be virtualized%
+      %\cite{clickos,netvm}
+      : \textit{ClickOS} \cite{clickos}, \textit{NetVM} \cite{netvm}
+      %\footnote{\bibentry{clickos}}
+    \item Notable example: the \textit{Click} modular router \cite{click}
+  \end{itemize}
+  Why now?
   \begin{itemize}
     \item Off-the-shelf high-performance hardware
     \item High-speed packet I/O libraries%
@@ -82,111 +248,165 @@
   \end{itemize}
 \end{frame}
 
-\subsection{Information centric networking}
-\begin{frame}[fragile]
-  \frametitle{Information Centric Networking}
-  \pause
-  \textbf{Host-centric} networking (IP): retrieve \mono{unitn.it/about/intro.mp4}
-  \pause
-  \begin{itemize}
-    \item Get the address of \mono{unitn.it}
-    \item Ask your router to deliver a request for \mono{/about/intro.mp4} to that host
-    \item Wait for the data
-  \end{itemize}
-  \pause
-  \textbf{Information-centric} networking: retrieve \mono{it/unitn/about/intro.mp4}
-  \pause
-  \begin{itemize}
-    \item Ask your router for the file \mono{it/unitn/about/intro.mp4}
-    \item Wait for the data
-  \pause
-    \item[$\rightarrow$]
-      The network will take care of fetching the content
-    \item[$\rightarrow$]
-      Allows for transparent in-network \textbf{caching}
-  \end{itemize}
-\end{frame}
 
-
-\section{The Augustus ICN router}
+\section{The Augustus CCN router}
 
 \begin{frame}[fragile]
-  \frametitle{The Augustus\footnote{By Alcatel-Lucent Bell labs, based on the \textit{Caesar} \cite{caesar} router} ICN router}
-  \pause
+  \frametitle{The Augustus\footnote{By Alcatel-Lucent Bell labs, based on the \textit{Caesar} \cite{caesar} router} CCN router}
+  Different flavours for ICN have been developed:\\
+  implements the \emph{content-centric networking} (CCN) protocol
+  \vspace{-6pt}
   \begin{itemize}
-    \item Two packet types: \textbf{interest} and \textbf{data} \textrm{} \cite{icn-packet}
-    \item Both headers hold a required variable-length, \textbf{name}
+    \item Two packet types: \textbf{interest} and \textbf{data} \cite{icn-packet}
+    \item Both headers hold a required variable-length, \textbf{resource name}
     \item Names are a sequence of slash-separated \textbf{components}
+    \item Implementation based on \emph{DPDK} for packet I/O \cite{dpdk}
   \end{itemize}
-  \pause
   Routing is based on three data structures:
-  \pause
+  \vspace{-6pt}
   \begin{itemize}
-    \item
-      Forwarding Information Base (FIB)
+    \item Forwarding Information Base (FIB)
       \begin{itemize}
         \item Next-hop information for the source of a name (or prefix)
       \end{itemize}
-      \pause
-    \item
-      Pending Interest Table (PIT)
+    \item Pending Interest Table (PIT)
       \begin{itemize}
         \item Next-hop for the client that requested a resource
       \end{itemize}
-      \pause
-    \item
-      Content Store (CS)
+    \item Content Store (CS)
       \begin{itemize}
         \item Local cache for recently-requested data
       \end{itemize}
   \end{itemize}
 \end{frame}
 
-\subsection{Routing in ICN}
+\subsection{Routing in CCN}
 \begin{frame}[fragile]
-  \frametitle{Routing in ICN - Interest packets}
-  \begin{algorithm}[H]
-    \DontPrintSemicolon
-    \KwIn{$p$: ICN interest packet}
-    \input{extra/interest_routing_algo.tex}
-    %\caption{\textsc{ICN interest route}}
-  \end{algorithm}
+  \frametitle{Routing in CCN}
+  \begin{columns}[c,onlytextwidth]
+    \column{.3\linewidth}
+    \resizebox{!}{.7\textheight}{%
+      \begin{tikzpicture}
+        \input{img/network.tikz.tex}
+        % R2 port names
+        \node [left=-2pt of R2.north] {\mono{if0}};
+        \node [above left=-3pt of R2.south west, xshift=2pt] {\mono{if1}};
+        \node [above right=-3pt of R2.south east, xshift=-2pt] {\mono{if2}};
+
+        % ANIMATION
+        \setcounter{beamerpauses}{2}
+        % failed request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west) (R1.west) (A.south west)};
+        \draw<+|handout:0> [dataline,-] plot [smooth,tension=.2] coordinates
+          {(A.east) (R1.east) (R2.south east) ([xshift=-5mm,yshift=-7mm]R2.south)}
+          node [rotate=40, opacity=1, ultra thick, draw=black!80, cross out, inner sep=0pt, minimum width=4pt, minimum height=4pt] {};
+        % successful request
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {(R2.south) (B.east)};
+        % request from C
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {([xshift=1mm]C.north west) ([xshift=1mm]R3.west) ([xshift=-1mm]R2.south east)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=0mm]R2.south) (R3.west) (C.north west)};
+      \end{tikzpicture}
+    }
+    \column{.7\linewidth}
+    Consider router \textbf{R2}:
+    \vspace{1em}
+
+    \resizebox{\linewidth}{!}{%
+      \begin{tikzpicture}
+        \tikzset{datastructure/.style={rounded corners=5pt, draw, text width=9cm}}
+        \node [datastructure] (FIB) {
+          \\[0pt]
+          \monobig{/com/updates} \hfill \monobig{if 0}
+        };
+        \node [above right=0pt of FIB.north west, yshift=-3pt] {\footnotesize Forwarding information base (FIB)};
+        \node [datastructure] (PIT) [below=2em of FIB] {
+          \\[0pt]
+          {\uncover<2>{
+            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \monobig{\{if 1\}}
+          }}
+        };
+        \node [above right=0pt of PIT.north west, yshift=-3pt] {\footnotesize Pending Interest Table (PIT)};
+        \node [datastructure] (CS) [below=2em of PIT] {
+          \\[0pt]
+          {\uncover<3->{
+            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \textit{(data\dots)}
+          }}
+        };
+      \node [above right=0pt of CS.north west, yshift=-3pt] {\footnotesize Content Store (CS)};
+      \end{tikzpicture}
+    }
+  \end{columns}
 \end{frame}
 
+\subsection{Pending Interest Table redesign}
 \begin{frame}[fragile]
-  \frametitle{Routing in ICN - Data packets}
-  \begin{algorithm}[H]
-    \DontPrintSemicolon
-    \KwIn{$p$: ICN data packet}
-    \input{extra/data_routing_algo.tex}
-    %\caption{\textsc{ICN data route}}
-  \end{algorithm}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Pending Interest Table parameters tuning}
-
+  \frametitle{Pending Interest Table redesign I}
+  PIT entries need an expiration time, for packets lost ``upstream''
+  \vspace{-6pt}
   \begin{itemize}
-    \item<+-> Implemented as a hash table and a ring
+    \item With a $1 s$ time-to-live: at least $5.5$ millions entries ($528 MB$)
+  \end{itemize}
+  Original design:
+  \vspace{-6pt}
+  \begin{itemize}
+    \item Implemented as a hash table and a ring
+    \item Require to periodically \emph{purge} expired entries from the bottom
+      \uncover<2->{
+        \begin{itemize}
+          \item Cleaning up took up to $10 ms$ (routing one pkt: about $800 ns$)
+          \item About $55000$ consecutive packets may go lost during purging
+        \end{itemize}
+      }
+  \end{itemize}
+  \vspace{-18pt}
+  \begin{center}
+    \includegraphics[width=.70\linewidth]{img/old_pit_sketch_trans.png}
+  \end{center}
+
+  \begin{comment}
+  \begin{itemize}
+    \item Implemented as a hash table and a ring
       \begin{itemize}
         \item The hash table only stores pointers to the ring, to keep it small
         \item Entries are timestamped: when stale, they must be purged
         \item Purging is currently performed online
       \end{itemize}
-    \item<+-> With a time-to-live of $1 s$, at $5.5 Mpps$: at least $5.5$ millions entries ($528 MB$)
-    \item<+-> A single expiring entry can linger at the bottom for $1 s$ causing the ring to fill up
-    \item<+-> Cleaning up the whole buffer takes in the order of $10 ms$
+    \item With a time-to-live of $1 s$, at $5.5 Mpps$: at least $5.5$ millions entries ($528 MB$)
+    \item A single expiring entry can linger at the bottom for $1 s$ causing the ring to fill up
+    \item Cleaning up the whole buffer takes in the order of $10 ms$
       \begin{itemize}
-        \item For comparison, routing a single packet takes about $800 ns$ on average
+        \item For comparison, routing a single packet takes about $800 ns$
         \item About $55000$ consecutive packets may go lost during purging
       \end{itemize}
-    \item<+-> What remedies?
+    \item What remedies?
       \begin{itemize}
         \item Current hack: limit the number of packets purged in a raw (increasing the size accordingly)
         \item Use a plain hash table (less cache-friendly)?
         \item Asynchronous purge, with lock-free synchronization (single producer, single consumer)?
       \end{itemize}
   \end{itemize}
+  \end{comment}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Pending Interest Table redesign II}
+  New design:
+  \vspace{-6pt}
+  \begin{itemize}
+    \item Single hash table (more wasted memory)
+    \item Follows same design principle (minimize accesses to RAM)
+    \item Does not require any purging procedure
+  \end{itemize}
+  \vspace{-14pt}
+  \begin{center}
+    \includegraphics[width=\linewidth]{img/new_pit_sketch_trans.png}
+  \end{center}
 \end{frame}
 
 \section{Performance evaluation}
@@ -194,30 +414,57 @@
 \begin{frame}[fragile]
   \frametitle{Experimental setup}
   \begin{itemize}
-    \item Two twin machines, each with two 10GBps Ethernet ports
-    \item All names have the same length (three components)
-    \item Initially, every interest packet has a unique name: no CS hits
-    \item Initially, the FIB only contains one entry of length 1 which matches all interests
+    \item Two twin machines, each with two 10Gbps Ethernet ports
     \item Throughput is measured at the level of Ethernet payload
   \end{itemize}
-
-  \begin{figure}
-    \includegraphics[height=.5\textheight]{img/test_setup.pdf}
-    \caption{Experimental setup {\tiny{TODO: better figure}}}
-  \end{figure}
+  Initial assumptions:
+  \begin{itemize}
+    \item All names have the same length (three components)
+    \item Every interest packet has a unique name: no CS hits
+    \item The FIB contains one entry of length 1 matching all interests
+  \end{itemize}
+  \vspace{.5em}
+  \begin{columns}
+    \column{.6\linewidth}
+    \resizebox{\linewidth}{!}{%
+      \input{img/test_flow.tkiz.tex}
+    }
+    \column{.4\linewidth}
+    \frame{\includegraphics[width=\linewidth]{img/servers_back.jpg}}
+    %\caption{Experimental setup}
+  \end{columns}
 \end{frame}
 
 
-\subsection{Packet generator}
+\subsection{Traffic generator}
 \begin{frame}[fragile]
-  \frametitle{Packet generator and echo server}
-
+  \frametitle{Traffic generator}
+  Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server
   \begin{figure}
     \includegraphics[height=.65\textheight]{img/traffgen_increasing_len.pdf}
-    \caption{Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server}
+    %\caption{Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server}
   \end{figure}
 \end{frame}
 
+\subsection{Evaluation of the new PIT design}
+\begin{frame}[fragile]
+  \frametitle{Evaluation of the new PIT design}
+
+  \begin{columns}[c]
+    \column{.35\textwidth}
+    \begin{figure}
+      \includegraphics[width=\textwidth]{img/pit_thr_cmp.pdf}
+    \end{figure}
+    \column{.65\textwidth}
+    \begin{figure}
+      \includegraphics[width=.85\textwidth]{img/augustus_load_loss.pdf}
+    \end{figure}
+  \end{columns}
+
+  Considering throughput, performance does not decrease\\
+  Working close to overload condition, loss decreases considerably
+
+\end{frame}
 
 \subsection{Router performance}
 
@@ -228,29 +475,92 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Router performance: threads and core mapping}
-  %\begin{comment}
-  \begin{columns}[T,onlytextwidth]
+  \frametitle{Router performance: threads and core mapping I}
+  DPDK requires to pin threads to processing cores\\
+  Test servers: 2 sockets $\times$ 8 cores $\times$ 2 (hyperthreading)
+
+  \begin{figure}
+    \includegraphics[height=.7\textheight]{img/cpus_horiz.pdf}
+  \end{figure}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Router performance: threads and core mapping II}
+  \begin{columns}[c,onlytextwidth]
     \column{0.6\textwidth}
-    %\resizebox{!}{.9\textheight}{%
-    %  \input{img/augustus_multithread2.pgf}
-    %}
-    \onslide<+->{
-      \includegraphics[width=\textwidth]{img/augustus_multithread.pdf}
-    }
+    \setcounter{beamerpauses}{2}
+    \begin{tikzpicture}
+      \node [inner sep=0pt] (plot)
+        {\includegraphics[width=\linewidth]{img/augustus_multithread_slim.pdf}};
+      \begin{scope}[
+          shift=(plot.south west),
+          x={(plot.south east)},y={(plot.north west)}
+        ]
+        %\draw [thick,red] (0,0) -- (0,1) -- (1,1) -- (1,0) -- cycle;
+        \coordinate (origin) at (.209,.141);
+        \coordinate [right=.077 of origin] (onezero);
+        \coordinate [above=.132 of origin] (zeroone);
+        \begin{scope}[shift=(origin), x={(onezero)}, y={(zeroone)}]
+          \foreach \x/\y in {0/0, 0/1, 0/6, 1/0, 9/0, 0/6} {\draw [fill=yellow] (\x,0) circle (1pt);}
+          \foreach \x/\y in {0/2.1, 1/2.6, 2/3.5, 3/3.8, 4/3.3, 5/5.8, 6/2.8, 7/5.5, 8/3.8, 9/3.6} {
+            %\draw [fill=green] (\x,\y) circle (1pt);
+            {\only<+|handout:0>{ \draw [<-,ultra thick,draw=black] (\x,\y) -- +(0,.5); }}
+          }
+        \end{scope}
+      \end{scope}
+    \end{tikzpicture}
 
     \column{0.4\textwidth}
-    \vspace{.1\textheight}
+    \setcounter{beamerpauses}{2}
     \begin{tikzpicture}
-      \onslide<+->{
-        \node (img1) {\includegraphics[width=\textwidth]{img/cpus_horiz.pdf}};
-      }
-      \onslide<+->{
-        \node (img2) at (img1) {\includegraphics[width=\textwidth]{img/cpus_horiz_0x3003.pdf}};
-      }
+      \node [inner sep=0pt] (map)
+        {\includegraphics[width=\linewidth]{img/cpus_horiz.pdf}};
+      \begin{scope}[
+          shift=(map.south west),
+          x={(map.south east)},y={(map.north west)}
+        ]
+        \tikzset{corebox/.style={draw=red, fill=red, fill opacity=.3}}
+        \newcommand\rect[2]{+(-#1,-#2) rectangle +(#1,#2)}
+        \newcommand\coreboxrect{\rect{.020}{.02}}
+        \newcommand\corebox[1]{\draw [corebox] (#1) \coreboxrect;}
+
+        \def\l{.055}  % left column
+        \def\r{.945}  % right column
+        \def\t{.93}   % top row
+        \def\h{.116}  % row height
+        \def\hh{.045}  % vertical dist between two hw threads
+
+        \coordinate (p0) at (\l,\t);
+        \coordinate (p1) at (\r,\t);
+        \coordinate (p14) at (\l,\t-7*\h);
+        \coordinate (p16) at (\l,\t-\hh);
+
+        {\only<+|handout:0>{ \corebox{p0} }}
+        {\only<+|handout:0>{ \corebox{p0} \corebox{p16} }}
+        {\only<+|handout:0>{ \corebox{p0} \corebox{p14} }}
+        {\only<+|handout:0>{ \corebox{p0} \corebox{p1} }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,2,4,6} { \corebox{\l,\t-\i*\h} }
+        }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,1} { \corebox{\l,\t-\i*\h} \corebox{\r,\t-\i*\h} }
+        }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,...,7} { \corebox{\l,\t-\i*\h} }
+        }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,1,2,3} { \corebox{\l,\t-\i*\h} \corebox{\r,\t-\i*\h} }
+        }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,...,7} { \corebox{\l,\t-\i*\h} \corebox{\r,\t-\i*\h} }
+        }}
+        {\only<+|handout:0>{
+          \foreach \i in {0,...,7} { \corebox{\l,\t-\i*\h} \corebox{\r,\t-\i*\h} }
+          \foreach \i in {0,...,7} { \corebox{\l,\t-\i*\h-\hh} \corebox{\r,\t-\i*\h-\hh} }
+        }}
+      \end{scope}
     \end{tikzpicture}
   \end{columns}
-  %\end{comment}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -259,14 +569,13 @@
   \includegraphics[width=\textwidth]{img/augustus_increasing_len_0xF.pdf}
 \end{frame}
 
-\section{Preliminary conclusions}
+\section{Conclusions and future work}
 \begin{frame}[fragile]
-  \frametitle{Preliminary conclusions}
+  \frametitle{Conclusions and future work}
   \begin{itemize}
-    \item Line rate was reached with packets of $220$ bytes ($\sim180$ bytes application-level payload),\\
-      thus showing the feasibility of deploying an ICN router on current hardware
-    \item Care must be taken in the configuration and deployment (must be memory-layout aware)
-    \item The PIT purging strategy could benefit from a redesign
+    \item The redesigned PIT improved performance under TODO.
+    \item The router reached $5.4$ Mpps, reaching line rate with packets of $220$ bytes ($\sim180$ bytes application-level payload), showing the feasibility of deploying a CCN router on current hardware
+    \item Configuration and deployment must be hardware aware: no software/hardware decoupling for high-performance routing
   \end{itemize}
 %\end{frame}
 %\begin{frame}[fragile]
@@ -277,9 +586,9 @@
   Missing bits:
 
   \begin{itemize}
-    \item<+-> How does it scale with FIB size?
-    \item<+-> So far, the local cache was just a burden (kept up-to-date, but any lookup fails): what improvements could we get with web-like traffic?
-    \item<+-> A port of the software as a module (\textit{element}) for the Click router is in progress: what's the impact on performance?
+    \item How does it scale with FIB size?
+    \item So far, the local cache was just a burden (kept up-to-date, but any lookup fails): what improvements could we get with web-like traffic?
+    \item A port of the software as a module for the \emph{Click} router is in progress: what's the impact on performance?
   \end{itemize}
 \end{frame}
 
@@ -295,31 +604,94 @@
   \begin{center}
     \usebeamercolor[fg]{palette primary}
     \usebeamerfont{section title}
-    {\normalsize Performance evaluation and design \\[-6pt]
-     of a software Information Centric Networking router}
+    {\large \inserttitle}
 
     \vspace{1em}
 
-    Questions?
+    {\normalsize Thanks for your attention}
   \end{center}
 \end{frame}
 \endgroup
 
 \extraslidesbegin
 
+\section*{bibliography}
 \begin{frame}[allowframebreaks]
   \frametitle{References}
 
   \setbeamertemplate{bibliography item}[text]
-  \bibliography{davide_kirchner_thesis}
+  \bibliography{davide_kirchner_thesis_pres}
   \bibliographystyle{alpha}
 \end{frame}
 
 
 \section*{Lost slides}
 \begin{frame}[fragile]
-  \frametitle{Click interface \textit{(in progress)}}
+  \frametitle{Click interface -- \textit{in progress}}
   \verbatiminput{extra/icnrouter.click.txt}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in CCN - Interest packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: CCN interest packet}
+    \input{extra/interest_routing_algo.tex}
+    %\caption{\textsc{CCN interest route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in CCN - Data packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: CCN data packet}
+    \input{extra/data_routing_algo.tex}
+    %\caption{\textsc{CCN data route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Pending Interest Table redesign}
+  PIT entries need an expiration time, for packets lost ``upstream''
+  \vspace{-6pt}
+  \begin{itemize}
+    \item With a $1 s$ time-to-live: at least $5.5$ millions entries ($528 MB$)
+  \end{itemize}
+  Original design:
+  \vspace{-1.2cm}
+  \begin{flushright}
+    \includegraphics[width=.7\linewidth]{img/old_pit_sketch_trans.png}
+  \end{flushright}
+  \vspace{-2.7cm}
+  \begin{columns}[t]
+    \column{.5\linewidth}
+    \begin{lstlisting}[language=c,escapechar=\%]
+struct orig_pit_ring_entry {
+ bool active;
+ uint64_t expiry;
+ uint64_t nonce_bf;
+ char full_name[MAX_NAME_LEN];
+ uint64_t interface_bitmask;
+ // index in HT for cleanup
+ uint32_t bucket_index;
+ uint8_t tab_in_bucket;
+};
+    \end{lstlisting}
+    \column{.5\linewidth}
+    \begin{lstlisting}[language=c,escapechar=\%]
+%\\%
+%\\%
+%\\%
+%\\%
+%\\%
+struct orig_pit_ht_entry {
+ bool busy;
+ uint32_t crc;
+ uint32_t ring_index;
+};
+    \end{lstlisting}
+  \end{columns}
 \end{frame}
 
 \extraslidesend

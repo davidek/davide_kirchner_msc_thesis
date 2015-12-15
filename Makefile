@@ -60,7 +60,7 @@ $(STATEOFTHEART).pdf: tex_outdir/$(STATEOFTHEART).pdf
 .PHONY: tex_outdir/$(SLIDES).pdf  # latexmk shall always run
 tex_outdir/$(SLIDES).pdf: $(SLIDES).tex
 	latexmk -pdf -outdir=tex_outdir \
-		-pdflatex='pdflatex' \
+		-xelatex \
 		-use-make \
 		$(SLIDES).tex
 	@# my pdflatex does not seem to understand this:
@@ -73,7 +73,7 @@ $(SLIDES).pdf: tex_outdir/$(SLIDES).pdf
 .PHONY: tex_outdir/$(HANDOUT).pdf  # latexmk shall always run
 tex_outdir/$(HANDOUT).pdf: $(HANDOUT).tex
 	latexmk -pdf -outdir=tex_outdir \
-		-pdflatex="pdflatex" \
+		-xelatex \
 		-use-make \
 		$(HANDOUT).tex
 	@# my pdflatex does not seem to understand this:
