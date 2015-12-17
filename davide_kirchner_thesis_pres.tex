@@ -44,7 +44,7 @@
 \input{custom_titlepage.tex}
 
 \title{Performance evaluation and design of a software router for Information-Centric Networking}
-\subtitle{}
+\subtitle{M.Sc. Thesis}
 \date{December \nth{18}, 2015}
 \author{Davide Kirchner}
 \institute{University of Trento / Scuola Superiore Sant'Anna}
@@ -60,13 +60,15 @@
 % make progress bar end at page 18 (questions?), excluding references
 %\renewcommand{\inserttotalframenumber}{18}
 
-\maketitle
+\begin{frame}[plain,label=titleframe]
+  \maketitle
+\end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Table of Contents}
+  \frametitle{Outline}
   \setbeamertemplate{section in toc}[sections numbered]
-  %\tableofcontents[hideallsubsections]
-  \tableofcontents
+  \tableofcontents[hideallsubsections]
+  %\tableofcontents
 \end{frame}
 
 \section{Introduction}
@@ -215,69 +217,43 @@
 \end{frame}
 
 
-\subsection{Software defined networking}
-\begin{frame}[fragile]
-  \frametitle{Software defined networking}
-  Current routing infrastructure: hardware-based
-  \begin{itemize}
-    \item High performance (IP backbone: 100s Gbps to Tbps)
-    \item Increasingly complex network functionalities %There's more to netwoking devices than IP routers
-      \begin{itemize}
-        \item Firewalls, web proxies, VPN bridges, NATs, \dots
-      \end{itemize}
-    \item Reconfiguration is often hard, hardware re-purpose impossible
-  \end{itemize}
-  Why software router? Flexibility:
-  \begin{itemize}
-    %\item Increasingly complex network functionalities
-    \item Quicker development/deployment cycle and (re)configuration
-    \item Hardware can be dynamically allocated to network functions
-    \item Can even be virtualized%
-      %\cite{clickos,netvm}
-      : \textit{ClickOS} \cite{clickos}, \textit{NetVM} \cite{netvm}
-      %\footnote{\bibentry{clickos}}
-    \item Notable example: the \textit{Click} modular router \cite{click}
-  \end{itemize}
-  Why now?
-  \begin{itemize}
-    \item Off-the-shelf high-performance hardware
-    \item High-speed packet I/O libraries%
-      \ \cite{dpdk,netmap}
-      %: \textit{DPDK} \cite{dpdk}, \textit{Netmap} \cite{netmap}
-    \item Software routing frameworks built on top \cite{fastclick,nba}
-  \end{itemize}
-\end{frame}
-
-
 \section{The Augustus CCN router}
 
 \begin{frame}[fragile]
   \frametitle{The Augustus\footnote{By Alcatel-Lucent Bell labs, based on the \textit{Caesar} \cite{caesar} router} CCN router}
   Different flavours for ICN have been developed:\\
   implements the \emph{content-centric networking} (CCN) protocol
-  \vspace{-6pt}
+  %\vspace{-6pt}
   \begin{itemize}
     \item Two packet types: \textbf{interest} and \textbf{data} \cite{icn-packet}
-    \item Both headers hold a required variable-length, \textbf{resource name}
-    \item Names are a sequence of slash-separated \textbf{components}
-    \item Implementation based on \emph{DPDK} for packet I/O \cite{dpdk}
+    %\item Both headers hold a variable-length hierarchical \textbf{resource name}
+    \item Both headers hold a required variable-length \textbf{resource name}
+    \item Names are hierarchical: slash-separated \textbf{components}
   \end{itemize}
-  Routing is based on three data structures:
-  \vspace{-6pt}
+  Implementation is fully software
   \begin{itemize}
-    \item Forwarding Information Base (FIB)
+    \item Based on \emph{DPDK} for packet I/O \cite{dpdk}
+    \item Only focuses on the \emph{data plane} (packet forwarding)
       \begin{itemize}
-        \item Next-hop information for the source of a name (or prefix)
-      \end{itemize}
-    \item Pending Interest Table (PIT)
-      \begin{itemize}
-        \item Next-hop for the client that requested a resource
-      \end{itemize}
-    \item Content Store (CS)
-      \begin{itemize}
-        \item Local cache for recently-requested data
+        \item No routing information dissemination protocol yet
       \end{itemize}
   \end{itemize}
+  %Routing is based on three data structures:
+  %\vspace{-6pt}
+  %\begin{itemize}
+  %  \item Forwarding Information Base (FIB)
+  %    \begin{itemize}
+  %      \item Next-hop information for the source of a name (or prefix)
+  %    \end{itemize}
+  %  \item Pending Interest Table (PIT)
+  %    \begin{itemize}
+  %      \item Next-hop for the client that requested a resource
+  %    \end{itemize}
+  %  \item Content Store (CS)
+  %    \begin{itemize}
+  %      \item Local cache for recently-requested data
+  %    \end{itemize}
+  %\end{itemize}
 \end{frame}
 
 \subsection{Routing in CCN}
@@ -289,9 +265,9 @@
       \begin{tikzpicture}
         \input{img/network.tikz.tex}
         % R2 port names
-        \node [left=-2pt of R2.north] {\mono{if0}};
-        \node [above left=-3pt of R2.south west, xshift=2pt] {\mono{if1}};
-        \node [above right=-3pt of R2.south east, xshift=-2pt] {\mono{if2}};
+        \node [left=-2pt of R2.north] {\mono{eth0}};
+        \node [above left=-3pt of R2.south west, xshift=2pt] {\mono{eth1}};
+        \node [above right=-3pt of R2.south east, xshift=-2pt] {\mono{eth2}};
 
         % ANIMATION
         \setcounter{beamerpauses}{2}
@@ -314,21 +290,22 @@
       \end{tikzpicture}
     }
     \column{.7\linewidth}
-    Consider router \textbf{R2}:
-    \vspace{1em}
+    Example: get \mono{/com/updates/sw/v4.2.5.tar.gz}
+    Router \textbf{R2}:
+    \vspace{.5em}
 
     \resizebox{\linewidth}{!}{%
       \begin{tikzpicture}
         \tikzset{datastructure/.style={rounded corners=5pt, draw, text width=9cm}}
         \node [datastructure] (FIB) {
           \\[0pt]
-          \monobig{/com/updates} \hfill \monobig{if 0}
+          \monobig{/com/updates} \hfill \monobig{eth0}
         };
         \node [above right=0pt of FIB.north west, yshift=-3pt] {\footnotesize Forwarding information base (FIB)};
         \node [datastructure] (PIT) [below=2em of FIB] {
           \\[0pt]
           {\uncover<2>{
-            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \monobig{\{if 1\}}
+            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \monobig{\{eth1\}}
           }}
         };
         \node [above right=0pt of PIT.north west, yshift=-3pt] {\footnotesize Pending Interest Table (PIT)};
@@ -359,7 +336,7 @@
     \item Require to periodically \emph{purge} expired entries from the bottom
       \uncover<2->{
         \begin{itemize}
-          \item Cleaning up took up to $10 ms$ (routing one pkt: about $800 ns$)
+          \item Cleaning up took up to $10 ms$ (routing decision: $\sim 800 ns/pkt$)
           \item About $55000$ consecutive packets may go lost during purging
         \end{itemize}
       }
@@ -424,27 +401,26 @@
     \item The FIB contains one entry of length 1 matching all interests
   \end{itemize}
   \vspace{.5em}
-  \begin{columns}
-    \column{.6\linewidth}
-    \resizebox{\linewidth}{!}{%
-      \input{img/test_flow.tkiz.tex}
-    }
-    \column{.4\linewidth}
-    \frame{\includegraphics[width=\linewidth]{img/servers_back.jpg}}
-    %\caption{Experimental setup}
-  \end{columns}
+  \newsavebox{\testflow}
+  \savebox{\testflow}{\input{img/test_flow_pres.tkiz.tex}}
+  \resizebox{\linewidth}{!}{%
+    \begin{tikzpicture}
+      \tikzset{myplain/.style={inner sep=0pt, outer sep=0pt}}
+      \tikzset{myline/.style={very thick, draw=black!50, dotted}}
+
+      \node [myplain] (graph) {\usebox{\testflow}};
+      \path let \p1=(graph.north), \p2=(graph.south), \n1={\y1-\y2} in
+        node [myplain, right=.5cm of graph] (pict)
+        {\frame{\includegraphics[height=\n1]{img/servers_back.jpg}}};
+
+        \path [myline] (graph.north east) -- ([xshift=5mm,yshift=-8mm]pict.north west);
+        \path [myline] ([yshift=-1.8cm]graph.north east) -- ([xshift=5mm,yshift=-16mm]pict.north west);
+        \path [myline] ([yshift=1.8cm]graph.south east) -- ([xshift=6mm,yshift=-26mm]pict.north west);
+        \path [myline] (graph.south east) -- ([xshift=6mm,yshift=-33mm]pict.north west);
+    \end{tikzpicture}
+  }
 \end{frame}
 
-
-\subsection{Traffic generator}
-\begin{frame}[fragile]
-  \frametitle{Traffic generator}
-  Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server
-  \begin{figure}
-    \includegraphics[height=.65\textheight]{img/traffgen_increasing_len.pdf}
-    %\caption{Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server}
-  \end{figure}
-\end{frame}
 
 \subsection{Evaluation of the new PIT design}
 \begin{frame}[fragile]
@@ -501,7 +477,7 @@
         \coordinate [right=.077 of origin] (onezero);
         \coordinate [above=.132 of origin] (zeroone);
         \begin{scope}[shift=(origin), x={(onezero)}, y={(zeroone)}]
-          \foreach \x/\y in {0/0, 0/1, 0/6, 1/0, 9/0, 0/6} {\draw [fill=yellow] (\x,0) circle (1pt);}
+          %\foreach \x/\y in {0/0, 0/1, 0/6, 1/0, 9/0, 0/6} {\draw [fill=yellow] (\x,0) circle (1pt);}
           \foreach \x/\y in {0/2.1, 1/2.6, 2/3.5, 3/3.8, 4/3.3, 5/5.8, 6/2.8, 7/5.5, 8/3.8, 9/3.6} {
             %\draw [fill=green] (\x,\y) circle (1pt);
             {\only<+|handout:0>{ \draw [<-,ultra thick,draw=black] (\x,\y) -- +(0,.5); }}
@@ -572,19 +548,19 @@
 \section{Conclusions and future work}
 \begin{frame}[fragile]
   \frametitle{Conclusions and future work}
+  Achievements and lessons learned:
+  \onslide<+->
   \begin{itemize}
-    \item The redesigned PIT improved performance under TODO.
-    \item The router reached $5.4$ Mpps, reaching line rate with packets of $220$ bytes ($\sim180$ bytes application-level payload), showing the feasibility of deploying a CCN router on current hardware
-    \item Configuration and deployment must be hardware aware: no software/hardware decoupling for high-performance routing
+    \item<+-> Configuration and deployment must be hardware aware: no software/hardware decoupling for high-performance routing
+    \item<+-> The router reached $5.4$ Mpps, reaching line rate with packets of $220$ bytes ($\sim180$ bytes application-level payload), showing the feasibility of deploying a CCN router on current hardware
+    \item<+-> The redesigned PIT decreased losses under high load
   \end{itemize}
 %\end{frame}
 %\begin{frame}[fragile]
 %  \frametitle{Missing bits}
 
   \onslide<+->
-  \onslide<+->
-  Missing bits:
-
+  Future work:
   \begin{itemize}
     \item How does it scale with FIB size?
     \item So far, the local cache was just a burden (kept up-to-date, but any lookup fails): what improvements could we get with web-like traffic?
@@ -593,6 +569,7 @@
 \end{frame}
 
 
+\begin{comment}
 % copying some code from the \plain command, adding <handout:0>
 %\plain<handout:0>{% .........
 \begingroup
@@ -601,17 +578,24 @@
   parent=palette primary
 }
 \begin{frame}<handout:0>[plain,c,fragile]
+  \maketitle
   \begin{center}
     \usebeamercolor[fg]{palette primary}
     \usebeamerfont{section title}
     {\large \inserttitle}
-
     \vspace{1em}
-
     {\normalsize Thanks for your attention}
   \end{center}
 \end{frame}
 \endgroup
+\end{comment}
+
+\begingroup
+\metroset{background=dark}
+\titlegraphic{\centering\includegraphics[height=1.5cm]{img/logo_unitn_blu_inv.png}\hspace{2em}\includegraphics[height=1.5cm]{img/logo_santanna_inv.png}}
+\againframe<handout:0>[plain]{titleframe}
+\endgroup
+
 
 \extraslidesbegin
 
@@ -620,48 +604,29 @@
   \frametitle{References}
 
   \setbeamertemplate{bibliography item}[text]
+  \setbeamerfont{bibliography item}{size=\footnotesize}
+  \setbeamerfont{bibliography entry author}{size=\footnotesize}
+  \setbeamerfont{bibliography entry title}{size=\footnotesize}
+  \setbeamerfont{bibliography entry location}{size=\footnotesize}
+  \setbeamerfont{bibliography entry note}{size=\footnotesize}
   \bibliography{davide_kirchner_thesis_pres}
   \bibliographystyle{alpha}
 \end{frame}
 
 
 \section*{Lost slides}
+
 \begin{frame}[fragile]
   \frametitle{Click interface -- \textit{in progress}}
   \verbatiminput{extra/icnrouter.click.txt}
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Routing in CCN - Interest packets}
-  \begin{algorithm}[H]
-    \DontPrintSemicolon
-    \KwIn{$p$: CCN interest packet}
-    \input{extra/interest_routing_algo.tex}
-    %\caption{\textsc{CCN interest route}}
-  \end{algorithm}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Routing in CCN - Data packets}
-  \begin{algorithm}[H]
-    \DontPrintSemicolon
-    \KwIn{$p$: CCN data packet}
-    \input{extra/data_routing_algo.tex}
-    %\caption{\textsc{CCN data route}}
-  \end{algorithm}
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Pending Interest Table redesign}
-  PIT entries need an expiration time, for packets lost ``upstream''
-  \vspace{-6pt}
-  \begin{itemize}
-    \item With a $1 s$ time-to-live: at least $5.5$ millions entries ($528 MB$)
-  \end{itemize}
+  \frametitle{Pending Interest Table redesign -- detail I}
   Original design:
   \vspace{-1.2cm}
   \begin{flushright}
-    \includegraphics[width=.7\linewidth]{img/old_pit_sketch_trans.png}
+    \includegraphics[width=.8\linewidth]{img/old_pit_sketch_trans.png}
   \end{flushright}
   \vspace{-2.7cm}
   \begin{columns}[t]
@@ -692,6 +657,154 @@ struct orig_pit_ht_entry {
 };
     \end{lstlisting}
   \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Pending Interest Table redesign -- detail II}
+  Improved design:
+  \begin{center}
+    \includegraphics[width=.9\linewidth]{img/new_pit_sketch_trans.png}
+  \end{center}
+  \vspace{-.8cm}
+  \begin{columns}[t]
+    \column{.5\linewidth}
+    \begin{lstlisting}[language=c,escapechar=\%]
+struct pit_index_entry {
+ bool busy;
+ uint32_t crc;
+ uint64_t expiry;
+};
+    \end{lstlisting}
+    \column{.5\linewidth}
+    \begin{lstlisting}[language=c,escapechar=\%]
+struct pit_body_entry {
+ uint64_t nonce_bf;
+ char full_name[MAX_NAME_LEN];
+ uint64_t interface_bitmask;
+};
+    \end{lstlisting}
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in CCN -- PIT aggregation}
+  \begin{columns}[c,onlytextwidth]
+    \column{.3\linewidth}
+    \resizebox{!}{.7\textheight}{%
+      \begin{tikzpicture}
+        \input{img/network.tikz.tex}
+        % R2 port names
+        \node [left=-2pt of R2.north] {\mono{eth0}};
+        \node [above left=-3pt of R2.south west, xshift=2pt] {\mono{eth1}};
+        \node [above right=-3pt of R2.south east, xshift=-2pt] {\mono{eth2}};
+
+        % ANIMATION
+        \setcounter{beamerpauses}{2}
+
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {(B.north) (R2.west) (R1.west) (A.south west)};
+        \draw<+|handout:0> [intline] plot [smooth,tension=.2] coordinates 
+          {([xshift=1mm]C.north west) ([xshift=1mm]R3.west) ([xshift=-1mm]R2.south east)};
+
+        \draw<+|handout:0> [dataline,-] plot [smooth,tension=.2] coordinates
+          {(A.east) (R1.east) ([xshift=2mm]R2.south)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=2mm]R2.south) (B.east)};
+        \draw<.|handout:0> [dataline] plot [smooth,tension=.2] coordinates
+          {([xshift=2mm]R2.south) (R3.west) (C.north west)};
+      \end{tikzpicture}
+    }
+    \column{.7\linewidth}
+    Example: get \mono{/com/updates/sw/v4.2.5.tar.gz}
+    Router \textbf{R2}:
+    \vspace{.5em}
+
+    \resizebox{\linewidth}{!}{%
+      \begin{tikzpicture}
+        \tikzset{datastructure/.style={rounded corners=5pt, draw, text width=9cm}}
+        \node [datastructure] (FIB) {
+          \\[0pt]
+          \monobig{/com/updates} \hfill \monobig{eth0}
+        };
+        \node [above right=0pt of FIB.north west, yshift=-3pt] {\footnotesize Forwarding information base (FIB)};
+        \node [datastructure] (PIT) [below=2em of FIB] {
+          \\[0pt]
+          {\uncover<2-3>{
+            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \monobig{\{eth1\only<3>{, eth2}\}}
+          }}
+        };
+        \node [above right=0pt of PIT.north west, yshift=-3pt] {\footnotesize Pending Interest Table (PIT)};
+        \node [datastructure] (CS) [below=2em of PIT] {
+          \\[0pt]
+          {\uncover<4->{
+            \monobig{/com/updates/sw/v4.2.5.tar.gz} \hfill \textit{(data\dots)}
+          }}
+        };
+      \node [above right=0pt of CS.north west, yshift=-3pt] {\footnotesize Content Store (CS)};
+      \end{tikzpicture}
+    }
+  \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Traffic generator}
+  Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server
+  \begin{figure}
+    \includegraphics[height=.65\textheight]{img/traffgen_increasing_len.pdf}
+    %\caption{Evaluating performance of the packet generator alone, with a loop cable connecting the two ports on a single server}
+  \end{figure}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in CCN -- Interest packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: CCN interest packet}
+    \input{extra/interest_routing_algo.tex}
+    %\caption{\textsc{CCN interest route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Routing in CCN -- Data packets}
+  \begin{algorithm}[H]
+    \DontPrintSemicolon
+    \KwIn{$p$: CCN data packet}
+    \input{extra/data_routing_algo.tex}
+    %\caption{\textsc{CCN data route}}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Software defined networking}
+  Current routing infrastructure: hardware-based
+  \begin{itemize}
+    \item High performance (IP backbone: 100s Gbps to Tbps)
+    \item Increasingly complex network functionalities %There's more to netwoking devices than IP routers
+      \begin{itemize}
+        \item Firewalls, web proxies, VPN bridges, NATs, \dots
+      \end{itemize}
+    \item Reconfiguration is often hard, hardware re-purpose impossible
+  \end{itemize}
+  Why software router? Flexibility:
+  \begin{itemize}
+    %\item Increasingly complex network functionalities
+    \item Quicker development/deployment cycle and (re)configuration
+    \item Hardware can be dynamically allocated to network functions
+    \item Can even be virtualized%
+      %\cite{clickos,netvm}
+      : \textit{ClickOS} \cite{clickos}, \textit{NetVM} \cite{netvm}
+      %\footnote{\bibentry{clickos}}
+    \item Notable example: the \textit{Click} modular router \cite{click}
+  \end{itemize}
+  Why now?
+  \begin{itemize}
+    \item Off-the-shelf high-performance hardware
+    \item High-speed packet I/O libraries%
+      \ \cite{dpdk,netmap}
+      %: \textit{DPDK} \cite{dpdk}, \textit{Netmap} \cite{netmap}
+    \item Software routing frameworks built on top \cite{fastclick,nba}
+  \end{itemize}
 \end{frame}
 
 \extraslidesend

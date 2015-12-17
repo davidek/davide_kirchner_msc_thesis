@@ -1,0 +1,73 @@
+\begin{tikzpicture}
+
+  \tikzset{cable/.style={thick}}
+  \tikzset{dataline/.style={draw=black!50,ultra thick,->}}
+  \tikzset{intline/.style={dashed,draw=black!50,very thick,->}}
+
+
+  % Basic nodes
+
+  \node [rectangle,draw=black,minimum width=8cm,minimum height=1.8cm,outer sep=0pt]
+    (augustus) {Augustus router};
+  %\node [below=1mm of augustus.north] {Augustus Router};
+  \node [rectangle,draw=black,minimum width=8cm,minimum height=1.8cm,outer sep=0pt]
+    (pktgen) [below=1.5cm of augustus] {};
+  \node [above=0 of pktgen.south] {Traffic generator and sink};
+  \node [rectangle,draw=black,minimum width=3cm]
+    (intgen) [left=5mm of pktgen.center] {\small Interest generator};
+  \node [rectangle,draw=black,minimum width=3cm]
+    (echoserver) [right=5mm of pktgen.center] {\small Echo server\vphantom{g}}; % phantom g to align boxes
+
+  % Ports
+
+  \newcommand\port[1]{ \draw #1 +(-3mm,-1pt) rectangle +(3mm,1pt) [fill]}
+
+  \coordinate (augustus p0) at ([xshift=-2cm]augustus.south);
+  \coordinate (augustus p1) at ([xshift=2cm]augustus.south);
+  \coordinate (pktgen p0) at ([xshift=-2cm]pktgen.north);
+  \coordinate (pktgen p1) at ([xshift=2cm]pktgen.north);
+
+  \port{(augustus p0)};
+  \port{(augustus p1)};
+  \port{(pktgen p0)};
+  \port{(pktgen p1)};
+
+  \coordinate (augustus p0 int) at ([xshift=-.2cm]augustus p0);
+  \coordinate (augustus p0 data) at ([xshift=.2cm]augustus p0);
+  \coordinate (augustus p1 int) at ([xshift=.2cm]augustus p1);
+  \coordinate (augustus p1 data) at ([xshift=-.2cm]augustus p1);
+  \coordinate (pktgen p0 int) at ([xshift=-.2cm]pktgen p0);
+  \coordinate (pktgen p0 data) at ([xshift=.2cm]pktgen p0);
+  \coordinate (pktgen p1 int) at ([xshift=.2cm]pktgen p1);
+  \coordinate (pktgen p1 data) at ([xshift=-.2cm]pktgen p1);
+
+  \node at (augustus p0.north) [anchor=south] {\mono{eth1}};
+  \node at (augustus p1.north) [anchor=south] {\mono{eth0}};
+  %\node at (augustus p0.north) [anchor=south] {\footnotesize{p0}};
+  %\node at (augustus p1.north) [anchor=south] {\footnotesize{p1}};
+  %\node at (pktgen p0.south) [anchor=north] {\footnotesize{p0}};
+  %\node at (pktgen p1.south) [anchor=north] {\footnotesize{p1}};
+
+  % Port-to-port connections
+
+  \draw [cable] (augustus p0) -- (pktgen p0);
+  \draw [cable] (augustus p1) -- (pktgen p1);
+
+  \draw [intline] (pktgen p0 int) -- (augustus p0 int)
+    node [midway, above, sloped] {\footnotesize{interest}};
+  \draw [intline] (augustus p1 int) -- (pktgen p1 int)
+    node [midway, above, sloped] {\footnotesize{interest}};
+
+  \draw [dataline] (pktgen p1 data) -- (augustus p1 data)
+    node [midway, above, sloped] {\footnotesize{data}};
+  \draw [dataline] (augustus p0 data) -- (pktgen p0 data)
+    node [midway, above, sloped] {\footnotesize{data}};
+
+  % Intra traffic generator connections
+
+  \draw [intline,thin,<-] (pktgen p0 int) -- (pktgen p0 int |- intgen.north);
+  \draw [dataline,thin] (pktgen p0 data) -- +(0,-5mm) -| ([xshift=-1.2cm]echoserver.north);
+  \draw [intline,thin] (pktgen p1 int) -- (pktgen p1 int |- echoserver.north);
+  \draw [dataline,thin,<-] (pktgen p1 data) -- (pktgen p1 data |- echoserver.north);
+
+\end{tikzpicture}

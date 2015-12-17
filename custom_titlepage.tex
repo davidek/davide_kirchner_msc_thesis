@@ -1,4 +1,38 @@
 \makeatletter
+\setbeamertemplate{title page}{
+  \begin{minipage}[b][\paperheight]{\textwidth}
+    \begin{centering}
+      \vbox to 0pt {
+        \vspace*{2em}
+        \inserttitlegraphic%
+        \par%
+        \usebeamertemplate*{institute}
+      }%
+      \vfill%
+      \vspace*{7em}
+      \usebeamertemplate*{subtitle}
+      \usebeamertemplate*{title}
+      \usebeamertemplate*{title separator}
+      \vspace*{1em}
+      \usebeamertemplate*{date}
+      \usebeamertemplate*{author}
+      \vfill%
+      \vspace*{1mm}
+    \end{centering}
+  \end{minipage}
+}
+\setbeamertemplate{author}{
+  \vspace*{2em}
+  \begin{tabular*}{\textwidth}{ l @{\extracolsep{\fill}} l }
+    \usebeamercolor{author}Graduant: & Supervisors:\\
+    Davide Kirchner & prof. Renato lo Cigno\\[-.3em]
+    ~ & prof. Luca Valcarenghi
+  \end{tabular*}
+  %\insertauthor%
+  %\par%
+  \vspace*{0.25em}
+}
+
 % \setbeamertemplate{title page}{
 %   \begin{minipage}[b][\paperheight]{\textwidth}
 %     \ifx\inserttitlegraphic\@empty\else\usebeamertemplate*{title graphic}\fi
@@ -28,11 +62,11 @@
   \par%
   \vspace*{0.5em}
 }
-% \setbeamertemplate{subtitle}{
-%   \insertsubtitle%
-%   \par%
-%   \vspace*{0.5em}
-% }
+\setbeamertemplate{subtitle}{
+  \smaller[.5]\insertsubtitle%
+  \par%
+  \vspace*{0.2em}
+}
 % \setbeamertemplate{author}{
 %   \vspace*{2em}
 %   \insertauthor%
